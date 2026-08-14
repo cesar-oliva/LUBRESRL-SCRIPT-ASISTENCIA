@@ -1,0 +1,63 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from src.attendance.api.employees import router as employees_router
+from src.attendance.api.turns import router as turns_router
+from src.attendance.api.employee_turns import (
+    router as employee_turns_router
+)
+
+
+app = FastAPI(
+    title="Attendance API",
+    description="API para gestión de empleados, turnos y asignaciones",
+    version="1.0.0"
+)
+
+
+# =========================================================
+# CORS
+# =========================================================
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# =========================================================
+# API ROUTERS
+# =========================================================
+
+app.include_router(employees_router)
+app.include_router(turns_router)
+app.include_router(employee_turns_router)
+
+
+# =========================================================
+# ROOT
+# =========================================================
+
+@app.get("/")
+def root():
+
+    return {
+        "application": "Attendance API",
+        "version": "1.0.0",
+        "status": "running"
+    }
+
+
+# =========================================================
+# HEALTH CHECK
+# =========================================================
+
+@app.get("/health")
+def health():
+
+    return {
+        "status": "ok"
+    }

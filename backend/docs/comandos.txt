@@ -1,0 +1,11 @@
+/*Crear la base de datos*/
+python -m src.attendance.database.init_db
+
+/*Cargar empleados*/
+python -m src.attendance.database.seed_employees
+
+/*Ejecutar proyecto*/
+uvicorn src.attendance.main:app --reload
+
+/*Ejecutar tests*/
+python -m tests.test_employee_service
