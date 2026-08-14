@@ -1,0 +1,279 @@
+/* =========================================================
+   EMPLOYEES
+   ========================================================= */
+
+.employees-page {
+    width: 100%;
+    max-width: 1200px;
+
+    margin: 0 auto;
+}
+
+
+/* =========================================================
+   CONTENT CARD
+   ========================================================= */
+
+.content-card {
+    background-color: var(--color-surface);
+
+    border: 1px solid var(--color-border);
+
+    border-radius: var(--radius-lg);
+
+    padding: 24px;
+
+    box-shadow: var(--shadow-sm);
+}
+
+
+.content-card-header {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 24px;
+}
+
+
+.content-card-header h3 {
+    margin: 0 0 6px;
+
+    color: var(--color-text-dark);
+}
+
+
+.content-card-header p {
+    margin: 0;
+
+    color: var(--color-text-secondary);
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.primary-button {
+    border: none;
+
+    border-radius: var(--radius-md);
+
+    padding: 10px 16px;
+
+    background-color: var(--color-primary);
+
+    color: white;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    transition:
+        background-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.primary-button:hover {
+    background-color: var(--color-primary-dark);
+
+    transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.employees-table-container {
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+
+.data-table {
+    width: 100%;
+
+    border-collapse: collapse;
+}
+
+
+.data-table th,
+.data-table td {
+    padding: 14px 16px;
+
+    text-align: left;
+
+    border-bottom:
+        1px solid var(--color-border);
+}
+
+
+.data-table th {
+    background-color: var(--color-surface-hover);
+
+    color: #475569;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    text-transform: uppercase;
+}
+
+
+.data-table td {
+    color: #334155;
+
+    font-size: 14px;
+}
+
+
+.data-table tbody tr {
+    transition:
+        background-color 0.15s ease;
+}
+
+
+.data-table tbody tr:hover {
+    background-color: var(--color-surface-hover);
+}
+
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* =========================================================
+   EMPLOYEE STATUS
+   ========================================================= */
+
+.employee-status {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 6px 12px;
+
+    border-radius: var(--radius-full);
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+
+.employee-status::before {
+    content: "";
+
+    width: 8px;
+    height: 8px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+}
+
+
+/* =========================================================
+   ACTIVE
+   ========================================================= */
+
+.employee-status.active {
+    color: #166534;
+
+    background-color: #dcfce7;
+
+    border: 1px solid #86efac;
+}
+
+
+.employee-status.active::before {
+    background-color: #22c55e;
+}
+
+
+/* =========================================================
+   INACTIVE
+   ========================================================= */
+
+.employee-status.inactive {
+    color: #991b1b;
+
+    background-color: #fee2e2;
+
+    border: 1px solid #fca5a5;
+}
+
+
+.employee-status.inactive::before {
+    background-color: #ef4444;
+}
+
+
+/* =========================================================
+   EMPTY
+   ========================================================= */
+
+.empty-state {
+    padding: 40px 20px;
+
+    text-align: center;
+
+    color: var(--color-text-secondary);
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.error-message {
+    padding: 16px;
+
+    border-radius: var(--radius-md);
+
+    background-color: var(--color-danger-light);
+
+    color: var(--color-danger-dark);
+
+    border: 1px solid #fecaca;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    .content-card {
+        padding: 16px;
+    }
+
+
+    .content-card-header {
+        flex-direction: column;
+
+        align-items: flex-start;
+    }
+
+
+    .primary-button {
+        width: 100%;
+    }
+
+
+    .data-table {
+        min-width: 600px;
+    }
+
+}

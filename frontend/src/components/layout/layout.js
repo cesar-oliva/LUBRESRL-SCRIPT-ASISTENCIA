@@ -1,7 +1,9 @@
+import "../../styles/layout.css";
+
 export function renderLayout(container) {
     container.innerHTML = `
         <div class="app-layout">
-        
+
             <main
                 id="page-content"
                 class="main-content"

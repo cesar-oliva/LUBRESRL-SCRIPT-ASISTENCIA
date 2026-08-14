@@ -1,7 +1,6 @@
-export function renderHome() {
+import "../styles/home.css";
 
-    const container = document.querySelector("#page-content");
-
+export function renderHome(container) {
 
     container.innerHTML = `
         <div class="home-page">
@@ -36,7 +35,12 @@ export function renderHome() {
             <section class="dashboard-grid">
 
 
-                <div class="dashboard-card">
+                <!-- EMPLEADOS -->
+
+                <div
+                    class="dashboard-card"
+                    data-navigate="employees"
+                >
 
                     <span class="dashboard-icon">
                         👥
@@ -57,7 +61,12 @@ export function renderHome() {
                 </div>
 
 
-                <div class="dashboard-card">
+                <!-- TURNOS -->
+
+                <div
+                    class="dashboard-card"
+                    data-navigate="turns"
+                >
 
                     <span class="dashboard-icon">
                         🕐
@@ -78,7 +87,12 @@ export function renderHome() {
                 </div>
 
 
-                <div class="dashboard-card">
+                <!-- ASISTENCIA -->
+
+                <div
+                    class="dashboard-card"
+                    data-navigate="attendance"
+                >
 
                     <span class="dashboard-icon">
                         📋
@@ -99,7 +113,12 @@ export function renderHome() {
                 </div>
 
 
-                <div class="dashboard-card">
+                <!-- REPORTES -->
+
+                <div
+                    class="dashboard-card"
+                    data-navigate="reports"
+                >
 
                     <span class="dashboard-icon">
                         📊

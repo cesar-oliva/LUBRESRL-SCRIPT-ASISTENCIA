@@ -1,62 +1,17 @@
-import {
-    getEmployees,
-    getActiveEmployees,
-    getEmployee,
-    searchEmployees,
-    createEmployee,
-    updateEmployee,
-    setEmployeeActive,
-    deleteEmployee
-} from "../api/employeeApi.js";
+const API_URL = 'http://127.0.0.1:8000';
 
 
-export async function loadEmployees() {
-    return getEmployees();
-}
+export async function getEmployees() {
 
-
-export async function loadActiveEmployees() {
-    return getActiveEmployees();
-}
-
-
-export async function loadEmployee(employeeNumber) {
-    return getEmployee(employeeNumber);
-}
-
-
-export async function findEmployeesByName(name) {
-    return searchEmployees(name);
-}
-
-
-export async function addEmployee(employee) {
-    return createEmployee(employee);
-}
-
-
-export async function editEmployee(
-    employeeNumber,
-    employee
-) {
-    return updateEmployee(
-        employeeNumber,
-        employee
+    const response = await fetch(
+        `${API_URL}/employees`
     );
-}
 
+    if (!response.ok) {
+        throw new Error(
+            `Error al obtener empleados: ${response.status}`
+        );
+    }
 
-export async function changeEmployeeStatus(
-    employeeNumber,
-    active
-) {
-    return setEmployeeActive(
-        employeeNumber,
-        active
-    );
-}
-
-
-export async function removeEmployee(employeeNumber) {
-    return deleteEmployee(employeeNumber);
+    return await response.json();
 }

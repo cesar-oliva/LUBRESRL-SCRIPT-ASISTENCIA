@@ -1,0 +1,197 @@
+/* =========================================================
+   HOME
+   ========================================================= */
+
+.home-page {
+    width: 100%;
+    max-width: 1200px;
+
+    margin: 0 auto;
+}
+
+
+/* =========================================================
+   PAGE HEADER
+   ========================================================= */
+
+.page-header {
+    margin-bottom: 25px;
+}
+
+
+.page-header h2 {
+    margin: 0;
+
+    font-size: 28px;
+    font-weight: 600;
+
+    color: var(--color-text-dark);
+}
+
+
+.page-header p {
+    margin-top: 6px;
+
+    color: var(--color-text-secondary);
+}
+
+
+/* =========================================================
+   WELCOME
+   ========================================================= */
+
+.welcome-card {
+    padding: 28px;
+
+    margin-bottom: 25px;
+
+    background-color: var(--color-surface);
+
+    border:
+        1px solid var(--color-border);
+
+    border-radius: var(--radius-lg);
+
+    box-shadow: var(--shadow-sm);
+}
+
+
+.welcome-card h3 {
+    margin: 0 0 8px;
+
+    font-size: 20px;
+}
+
+
+.welcome-card p {
+    margin: 0;
+
+    color: var(--color-text-secondary);
+}
+
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+
+.dashboard-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 20px;
+}
+
+
+.dashboard-card {
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+
+    padding: 22px;
+
+    background-color: var(--color-surface);
+
+    border:
+        1px solid var(--color-border);
+
+    border-radius: var(--radius-lg);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+
+    box-shadow: var(--shadow-md);
+
+    border-color: var(--color-primary);
+}
+
+
+/* =========================================================
+   DASHBOARD ICON
+   ========================================================= */
+
+.dashboard-icon {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 48px;
+    height: 48px;
+
+    flex-shrink: 0;
+
+    border-radius: var(--radius-md);
+
+    background-color: var(--color-primary-light);
+
+    font-size: 23px;
+}
+
+
+/* =========================================================
+   DASHBOARD CONTENT
+   ========================================================= */
+
+.dashboard-card h3 {
+    margin: 0 0 5px;
+
+    font-size: 17px;
+}
+
+
+.dashboard-card p {
+    margin: 0;
+
+    color: var(--color-text-secondary);
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   CARD COLORS
+   ========================================================= */
+
+.dashboard-card[data-navigate="employees"]
+.dashboard-card {
+    border-left: 4px solid var(--color-primary);
+}
+
+
+.dashboard-card[data-navigate="turns"] {
+    border-left: 4px solid var(--color-warning);
+}
+
+
+.dashboard-card[data-navigate="attendance"] {
+    border-left: 4px solid var(--color-success);
+}
+
+
+.dashboard-card[data-navigate="reports"] {
+    border-left: 4px solid var(--color-purple);
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+}

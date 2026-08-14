@@ -54,8 +54,30 @@ export function initializeApp() {
         }
 
         page(content);
+
+        initializeNavigation();
     };
 
 
     window.navigate('home');
+}
+
+
+function initializeNavigation() {
+
+    const navigationElements = document.querySelectorAll(
+        '[data-navigate]'
+    );
+
+    navigationElements.forEach(element => {
+
+        element.addEventListener('click', () => {
+
+            const route = element.dataset.navigate;
+
+            window.navigate(route);
+
+        });
+
+    });
 }
