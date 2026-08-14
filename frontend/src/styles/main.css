@@ -1,0 +1,322 @@
+* {
+    box-sizing: border-box;
+}
+
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+
+    width: 100%;
+    min-height: 100%;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background-color: #f4f6f8;
+    color: #1f2937;
+}
+
+
+#app {
+    min-height: 100vh;
+}
+
+
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+
+.app-layout {
+    display: flex;
+
+    min-height: 100vh;
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.sidebar {
+    width: 250px;
+
+    min-height: 100vh;
+
+    background-color: #172033;
+
+    color: white;
+
+    display: flex;
+
+    flex-direction: column;
+}
+
+
+.sidebar-header {
+    padding: 24px 20px;
+
+    border-bottom:
+        1px solid #29344a;
+}
+
+
+.sidebar-header h1 {
+    margin: 0;
+
+    font-size: 22px;
+
+    font-weight: 600;
+}
+
+
+.sidebar-header span {
+    display: block;
+
+    margin-top: 5px;
+
+    font-size: 13px;
+
+    color: #9ca8bb;
+}
+
+
+/* =========================================================
+   MENU
+   ========================================================= */
+
+.sidebar-menu {
+    display: flex;
+
+    flex-direction: column;
+
+    padding: 15px 10px;
+}
+
+
+.sidebar-link {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    width: 100%;
+
+    padding: 12px 14px;
+
+    margin-bottom: 4px;
+
+    border: none;
+
+    border-radius: 7px;
+
+    background: transparent;
+
+    color: #cbd5e1;
+
+    text-align: left;
+
+    font-size: 15px;
+
+    cursor: pointer;
+}
+
+
+.sidebar-link:hover {
+    background-color: #222d42;
+
+    color: white;
+}
+
+
+.sidebar-link.active {
+    background-color: #2563eb;
+
+    color: white;
+}
+
+
+/* =========================================================
+   MAIN
+   ========================================================= */
+
+.main-content {
+    flex: 1;
+
+    min-width: 0;
+
+    padding: 32px;
+}
+
+
+/* =========================================================
+   HOME
+   ========================================================= */
+
+.home-page {
+    max-width: 1200px;
+
+    margin: 0 auto;
+}
+
+
+.page-header {
+    margin-bottom: 25px;
+}
+
+
+.page-header h2 {
+    margin: 0;
+
+    font-size: 28px;
+
+    font-weight: 600;
+}
+
+
+.page-header p {
+    margin-top: 6px;
+
+    color: #6b7280;
+}
+
+
+/* =========================================================
+   WELCOME
+   ========================================================= */
+
+.welcome-card {
+    padding: 28px;
+
+    margin-bottom: 25px;
+
+    background-color: white;
+
+    border:
+        1px solid #e5e7eb;
+
+    border-radius: 10px;
+}
+
+
+.welcome-card h3 {
+    margin-top: 0;
+
+    margin-bottom: 8px;
+
+    font-size: 20px;
+}
+
+
+.welcome-card p {
+    margin: 0;
+
+    color: #6b7280;
+}
+
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+
+.dashboard-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 20px;
+}
+
+
+.dashboard-card {
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+
+    padding: 22px;
+
+    background-color: white;
+
+    border:
+        1px solid #e5e7eb;
+
+    border-radius: 10px;
+
+    transition:
+        transform 0.2s,
+        box-shadow 0.2s;
+}
+
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 5px 15px
+        rgba(0, 0, 0, 0.08);
+}
+
+
+.dashboard-icon {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 48px;
+
+    height: 48px;
+
+    border-radius: 8px;
+
+    background-color: #eff6ff;
+
+    font-size: 23px;
+}
+
+
+.dashboard-card h3 {
+    margin: 0 0 5px;
+
+    font-size: 17px;
+}
+
+
+.dashboard-card p {
+    margin: 0;
+
+    color: #6b7280;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    .sidebar {
+        width: 210px;
+    }
+
+
+    .main-content {
+        padding: 20px;
+    }
+
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
