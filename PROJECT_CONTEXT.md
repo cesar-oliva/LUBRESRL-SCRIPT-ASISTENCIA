@@ -1239,3 +1239,29 @@ código real de:
 NO inventar esta información.
 
 Debe agregarse cuando sea proporcionada por el usuario.
+
+# 22. ESTRUCTURA DE FRONTEND
+
+frontend/
+└── src/
+    ├── api/
+    │   ├── employeeApi.js
+    │   ├── turnApi.js
+    │   └── employeeTurnApi.js
+    │
+    ├── services/
+    │   ├── employeeService.js
+    │   ├── turnService.js
+    │   └── employeeTurnService.js
+    │
+    ├── components/
+    │   ├── employees/
+    │   ├── turns/
+    │   └── schedules/
+    │
+    ├── views/
+    │   ├── employeesView.js
+    │   ├── turnsView.js
+    │   └── schedulesView.js
+    │
+    └── utils/

@@ -6,6 +6,7 @@ python -m src.attendance.database.seed_employees
 
 /*Ejecutar proyecto*/
 uvicorn src.attendance.main:app --reload
+npm run dev
 
 /*Ejecutar tests*/
 python -m tests.test_employee_service
