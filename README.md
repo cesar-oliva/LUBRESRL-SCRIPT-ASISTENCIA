@@ -1,183 +1,86 @@
 # Sistema de Asistencia
 
-Aplicación de gestión de empleados, turnos y asignaciones de trabajo para una empresa o organización. El proyecto está dividido en un backend desarrollado con FastAPI y una interfaz web en JavaScript con Vite, usando SQLite como base de datos local.
+Aplicación para gestión de asistencia con backend en FastAPI, frontend en Vite y base SQLite.
+
+El proyecto ya incluye ABM de empleados, turnos y feriados, además de un módulo de importación mensual de marcaciones (Excel CrossChex) con previsualización y confirmación de reporte.
 
 ## Objetivo
 
-El sistema permite:
-
-- Registrar empleados y controlar su estado activo/inactivo.
-- Gestionar turnos de trabajo y sus períodos horarios.
-- Asignar turnos a empleados por día de la semana.
-- Exponer la información mediante una API REST.
-- Mostrar una interfaz web ligera para navegar por empleados y turnos.
+Permitir administrar datos operativos de asistencia y procesar marcaciones reales para generar reportes mensuales por período.
 
 ## Stack tecnológico
 
-- Backend: Python, FastAPI
-- Frontend: JavaScript ES modules, Vite
+- Backend: Python 3, FastAPI, Pydantic
+- Frontend: JavaScript (ES Modules), Vite
 - Base de datos: SQLite
-- Validación y serialización: Pydantic
+- Importación de Excel: openpyxl
 
-## Estructura del proyecto
+## Estructura general
 
 ```text
-LUBRESRL-SCRIPT-ASISTENCIA/
-├── README.md
+attendance/
 ├── PROJECT_CONTEXT.md
+├── README.md
 ├── backend/
 │   ├── requirements.txt
 │   ├── data/
 │   ├── docs/
-│   │   └── comandos.txt
-│   └── src/
-│       └── attendance/
-│           ├── api/
-│           │   ├── app.py
-│           │   ├── employees.py
-│           │   ├── employee_turns.py
-│           │   ├── schemas.py
-│           │   └── turns.py
-│           ├── config/
-│           ├── database/
-│           │   ├── connection.py
-│           │   ├── init_db.py
-│           │   ├── schema.sql
-│           │   ├── seed_employees.py
-│           │   └── seed_turns.py
-│           ├── models/
-│           │   ├── employee.py
-│           │   └── turn.py
-│           ├── repositories/
-│           │   ├── employee_repository.py
-│           │   ├── employee_turn_repository.py
-│           │   └── turn_repository.py
-│           ├── services/
-│           │   ├── employee_service.py
-│           │   ├── employee_turn_service.py
-│           │   └── turn_service.py
-│           ├── utils/
-│           └── main.py
+│   ├── src/
+│   │   └── attendance/
+│   │       ├── api/
+│   │       ├── database/
+│   │       ├── models/
+│   │       ├── repositories/
+│   │       ├── services/
+│   │       └── main.py
 │   └── tests/
-│       └── test_employee_service.py
-├── frontend/
-│   ├── index.html
-│   ├── package.json
-│   ├── public/
-│   └── src/
-│       ├── app.js
-│       ├── main.js
-│       ├── api/
-│       │   └── employeeApi.js
-│       ├── components/
-│       ├── pages/
-│       │   ├── attendance.js
-│       │   ├── employees.js
-│       │   ├── home.js
-│       │   ├── reports.js
-│       │   └── turns.js
-│       ├── services/
-│       │   └── employeeService.js
-│       ├── styles/
-│       ├── utils/
-│       └── views/
-│           └── employeesView.js
-└── .venv/
+└── frontend/
+    ├── package.json
+    └── src/
+        ├── app.js
+        ├── pages/
+        ├── services/
+        └── styles/
 ```
 
-## Arquitectura
-
-El backend sigue una separación por capas:
-
-- Models: entidades del dominio, como empleado y turno.
-- Repositories: acceso directo a SQLite.
-- Services: validaciones y lógica de negocio.
-- API: endpoints con FastAPI.
-- Database: conexión y esquema de SQLite.
-
-La base de datos se crea en:
-
-- backend/data/attendance.db
-
-El esquema inicial está en:
-
-- backend/src/attendance/database/schema.sql
-
-## Funcionalidades actuales
+## Funcionalidades implementadas
 
 ### Backend
 
 - CRUD de empleados
 - CRUD de turnos
-- Gestión de períodos de turno
-- Asignación de turnos por día de la semana
-- Estado activo/inactivo por entidad
-- Endpoints REST para consultar y modificar datos
+- CRUD de feriados
+- Persistencia de turnos con múltiples períodos horarios
+- Importación de marcaciones desde Excel (CrossChex)
+- Previsualización de resultados antes de persistir
+- Confirmación y guardado de reporte mensual
+- Consulta de reporte guardado por período
+- Actualización de observación de registro de reporte
 
 ### Frontend
 
-- Pantalla de inicio
-- Vista de empleados
-- Vista de turnos
-- Navegación por rutas internas del cliente
+- Home con navegación a módulos
+- Pantalla de Empleados (ABM)
+- Pantalla de Turnos (ABM)
+- Pantalla de Feriados (ABM)
+- Pantalla de Reportes:
+  - import preview
+  - confirm import
+  - consulta por período
+  - tabla de resultados y resumen
 
-## Requisitos previos
+## Endpoints principales
 
-- Python 3.10 o superior
-- Node.js 18 o superior
-- npm
+### Salud
 
-## Instalación y ejecución
-
-### 1) Backend
-
-Desde la raíz del proyecto:
-
-```bash
-cd backend
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-python -m src.attendance.database.init_db
-```
-
-Iniciar el servidor API:
-
-```bash
-uvicorn src.attendance.main:app --reload
-```
-
-La API queda disponible en:
-
-- http://127.0.0.1:8000
-- Swagger/OpenAPI: http://127.0.0.1:8000/docs
-
-### 2) Frontend
-
-Desde la raíz del proyecto:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-La app web se sirve en:
-
-- http://127.0.0.1:5173
-
-## API REST
-
-La API principal se define en FastAPI y expone rutas bajo los prefijos:
-
-- /employees
-- /turns
+- GET /health
+- GET /
 
 ### Empleados
 
 - GET /employees
 - GET /employees/active
-- GET /employees/search/by-name?name=juan
+- GET /employees/search/by-name?name=
 - GET /employees/{employee_number}
 - POST /employees
 - PUT /employees/{employee_number}
@@ -188,92 +91,133 @@ La API principal se define en FastAPI y expone rutas bajo los prefijos:
 
 - GET /turns
 - GET /turns/active
-- GET /turns/{turn_id}
 - GET /turns/by-code/{code}
+- GET /turns/{turn_id}
 - POST /turns
 - PUT /turns/{turn_id}
 - DELETE /turns/{turn_id}
 
+### Feriados
+
+- GET /holidays
+- GET /holidays/{holiday_id}
+- POST /holidays
+- PUT /holidays/{holiday_id}
+- DELETE /holidays/{holiday_id}
+
+### Asistencia / Reportes
+
+- POST /attendance/import-preview
+- POST /attendance/import-confirm
+- GET /attendance/report/{period}
+- PUT /attendance/report/{report_id}
+
 ## Base de datos
 
-La conexión a SQLite se define en:
-
-- backend/src/attendance/database/connection.py
-
-El archivo de datos se genera en:
+Archivo SQLite generado en:
 
 - backend/data/attendance.db
 
-El esquema crea las siguientes tablas:
+Esquema definido en:
+
+- backend/src/attendance/database/schema.sql
+
+Tablas de negocio relevantes:
 
 - employees
 - turns
 - turn_periods
 - employee_turns
+- holidays
+- attendance_reports
 
-## Datos de ejemplo
+## Instalación
 
-El proyecto incluye scripts de carga de información para inicializar registros:
+### Requisitos
 
-- backend/src/attendance/database/seed_employees.py
-- backend/src/attendance/database/seed_turns.py
+- Python 3.10+
+- Node.js 18+
+- npm
 
-También se puede inicializar la base de datos manualmente con:
+### Backend
 
 ```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 python -m src.attendance.database.init_db
 ```
+
+Ejecutar API:
+
+```bash
+uvicorn src.attendance.main:app --reload
+```
+
+API disponible en:
+
+- http://127.0.0.1:8000
+- Docs Swagger: http://127.0.0.1:8000/docs
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend disponible en:
+
+- http://127.0.0.1:5173
+
+## Flujo recomendado de importación mensual
+
+1. Ir a Reportes en frontend.
+2. Seleccionar período (YYYY-MM).
+3. Cargar Excel exportado desde CrossChex.
+4. Ejecutar previsualización.
+5. Revisar resumen y detalle.
+6. Confirmar importación para persistir en attendance_reports.
+7. Consultar el mismo período para validar datos guardados.
+
+## Dependencias Python actuales
+
+En backend/requirements.txt están registradas, entre otras:
+
+- fastapi
+- uvicorn
+- openpyxl
+- python-multipart
+- pytest
+
+## Estado actual
+
+- Módulos ABM (empleados, turnos, feriados): operativos
+- Módulo reportes/importación: operativo en flujo base
+- Persistencia y consulta de reportes: operativas
+
+Nota:
+
+- Si el período seleccionado no coincide con las fechas del archivo, los registros pueden quedar como REGISTRO_INCONSISTENTE.
+- Cuando no existe asignación explícita de turno para un empleado/día, el sistema aplica inferencia de turno en base a turnos activos.
 
 ## Comandos útiles
 
 ```bash
-# Crear base de datos
-python -m src.attendance.database.init_db
+# Inicializar DB
+cd backend && source .venv/bin/activate && python -m src.attendance.database.init_db
 
-# Cargar empleados de ejemplo
-python -m src.attendance.database.seed_employees
+# Levantar backend
+cd backend && source .venv/bin/activate && uvicorn src.attendance.main:app --reload
 
-# Ejecutar backend
-uvicorn src.attendance.main:app --reload
-
-# Ejecutar frontend
+# Levantar frontend
 cd frontend && npm run dev
 
+# Build frontend
+cd frontend && npm run build
+
 # Ejecutar tests
-cd backend && python -m tests.test_employee_service
+cd backend && source .venv/bin/activate && PYTHONPATH=. pytest -q
 ```
-
-## Estado del proyecto
-
-Actualmente el proyecto tiene implementada la base de la gestión de asistencia con:
-
-- API REST funcional para empleados y turnos
-- Persistencia SQLite
-- Interfaz web básica para navegación
-- Estructura modular preparada para continuar desarrollando asistencia y reportes
-
-Algunas áreas siguen en progreso, por ejemplo:
-
-- pantallas de asistencia y reportes aún no están totalmente desarrolladas
-- la lógica de asignación por día existe en repositorios/servicios, pero la UI completa no está finalizada
-
-## Observación importante
-
-En el proyecto hay dos puntos de entrada del backend:
-
-- backend/src/attendance/main.py
-- backend/src/attendance/api/app.py
-
-El runner principal para iniciar la aplicación con Uvicorn es:
-
-- src.attendance.main:app
-
-Esto es lo que se usa en la documentación y en el arranque del servidor.
-
-## Licencia
-
-Este proyecto no define una licencia específica en el repositorio por el momento.
-
-## Autor / contexto
-
-Proyecto desarrollado como sistema interno de asistencia para LUBRESRL, con enfoque inicial en gestión de personal y turnos.
