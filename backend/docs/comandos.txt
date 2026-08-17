@@ -6,7 +6,9 @@ python -m src.attendance.database.seed_employees
 
 /*Ejecutar proyecto*/
 uvicorn src.attendance.main:app --reload
+uvicorn src.attendance.main:app --reload --host 0.0.0.0 --port 8082
 npm run dev
+npm run dev -- --host 192.168.1.13 --port 5173
 
 /*Ejecutar tests*/
 python -m tests.test_employee_service

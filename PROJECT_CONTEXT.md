@@ -1265,3 +1265,56 @@ frontend/
     │   └── schedulesView.js
     │
     └── utils/
+
+---
+
+# 23. ESTADO ACTUAL (2026-08-16)
+
+## 23.1 Funcionalidades completadas
+
+- ABM completo de empleados en frontend/backend.
+- ABM completo de turnos en frontend/backend.
+- Soporte de turnos con múltiples períodos (ejemplo: T4 partido).
+- ABM completo de feriados en frontend/backend.
+- Navegación desde Home a Empleados, Turnos, Feriados y Reportes.
+- Módulo de reportes en frontend con:
+    - previsualización de importación,
+    - confirmación de importación,
+    - consulta por período.
+- Endpoints de asistencia implementados:
+    - POST /attendance/import-preview
+    - POST /attendance/import-confirm
+    - GET /attendance/report/{period}
+    - PUT /attendance/report/{report_id}
+- Persistencia de reportes mensuales en tabla attendance_reports.
+- Importación Excel (CrossChex) con columnas:
+    - Usuario Nro.
+    - Fecha/Hora
+    - Registro
+- Normalización mejorada de Registro:
+    - acepta 0/1,
+    - acepta variantes numéricas (2/3, 4/5, etc.),
+    - acepta texto compatible (entrada/salida, check in/check out).
+- Inferencia de turno cuando falta asignación semanal:
+    - intenta resolver código real Tx con turnos activos,
+    - evita INF en la mayor cantidad de casos posible.
+
+## 23.2 Estado técnico backend
+
+- Arquitectura mantenida: API -> Services -> Repositories -> SQLite.
+- Sin arquitectura paralela ni duplicación de tablas de negocio existentes.
+- Responses del módulo de asistencia tipadas y serializadas para consumo frontend.
+- Confirmación de importación soporta reemplazo por período para evitar duplicados.
+
+## 23.3 Pendientes inmediatos
+
+- Validar con archivo real de CrossChex todos los valores de Registro observados en producción.
+- Ajustar inferencia de turno en casos borde (especialmente cruces de medianoche y marcas incompletas).
+- Resolver y dejar en verde la suite de tests del importador.
+- Incorporar edición de observación en la grilla de reportes del frontend usando PUT /attendance/report/{report_id}.
+
+## 23.4 Riesgos / observaciones
+
+- Si el período seleccionado no coincide con la fecha del archivo, los resultados pueden quedar en REGISTRO_INCONSISTENTE.
+- Si no existe asignación semanal en employee_turns, el sistema utiliza inferencia basada en turnos activos.
+- Existen warnings de OpenAPI por operation_id duplicados en rutas de turnos/employee_turns; no bloquea ejecución, pero requiere limpieza posterior.

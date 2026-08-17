@@ -1,42 +1,59 @@
+import pytest
+
+from src.attendance.repositories.employee_repository import EmployeeRepository
 from src.attendance.services.employee_service import EmployeeService
 
 
-service = EmployeeService()
+@pytest.fixture
+def employee_service():
+    return EmployeeService()
 
 
-# ---------------------------------------------------------
-# CANTIDAD
-# ---------------------------------------------------------
+@pytest.fixture
+def unique_employee_number():
+    repository = EmployeeRepository()
+    employee_number = 999991
 
-print("Total empleados:")
-print(service.count_employees())
+    while repository.exists(employee_number):
+        employee_number += 1
 
-
-# ---------------------------------------------------------
-# BUSCAR
-# ---------------------------------------------------------
-
-employee = service.get_employee(501)
-
-print("\nEmpleado:")
-print(employee)
+    return employee_number
 
 
-# ---------------------------------------------------------
-# BUSCAR POR NOMBRE
-# ---------------------------------------------------------
+def test_create_update_and_delete_employee(employee_service, unique_employee_number):
+    created = employee_service.create_employee(
+        unique_employee_number,
+        "Ana Gómez"
+    )
 
-print("\nBuscar Oliva:")
+    assert created.employee_number == unique_employee_number
+    assert created.name == "Ana Gómez"
+    assert created.active is True
 
-employees = service.search_employees("Oliva")
+    updated = employee_service.update_employee(
+        unique_employee_number,
+        "Ana García",
+        False
+    )
 
-for employee in employees:
-    print(employee)
+    assert updated.name == "Ana García"
+    assert updated.active is False
+
+    deleted = employee_service.delete_employee(unique_employee_number)
+
+    assert deleted is True
+
+    with pytest.raises(ValueError):
+        employee_service.get_employee(unique_employee_number)
 
 
-# ---------------------------------------------------------
-# ACTIVOS
-# ---------------------------------------------------------
+def test_activate_and_deactivate_employee(employee_service, unique_employee_number):
+    employee_service.create_employee(unique_employee_number, "Luis Pérez")
 
-print("\nEmpleados activos:")
-print(service.count_active_employees())
+    activated = employee_service.activate_employee(unique_employee_number)
+    assert activated.active is True
+
+    deactivated = employee_service.deactivate_employee(unique_employee_number)
+    assert deactivated.active is False
+
+    employee_service.delete_employee(unique_employee_number)

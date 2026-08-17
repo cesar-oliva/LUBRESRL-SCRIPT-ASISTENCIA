@@ -87,25 +87,25 @@ export function renderHome(container) {
                 </div>
 
 
-                <!-- ASISTENCIA -->
+                <!-- FERIADOS -->
 
                 <div
                     class="dashboard-card"
-                    data-navigate="attendance"
+                    data-navigate="holidays"
                 >
 
                     <span class="dashboard-icon">
-                        📋
+                        🏖️
                     </span>
 
                     <div>
 
                         <h3>
-                            Asistencia
+                            Feriados
                         </h3>
 
                         <p>
-                            Registrar y consultar asistencia
+                            Gestionar días no laborables
                         </p>
 
                     </div>

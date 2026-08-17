@@ -7,30 +7,33 @@ class EmployeeService:
     def __init__(self, repository=None):
         self.repository = repository or EmployeeRepository()
 
-    # ---------------------------------------------------------
-    # CREAR
-    # ---------------------------------------------------------
-
-    def create_employee(self, employee_number, name):
-        """
-        Crea un nuevo empleado.
-
-        Valida los datos antes de enviarlos al repository.
-        """
-
+    def _validate_employee_number(self, employee_number):
         if employee_number is None:
             raise ValueError("El número de empleado es obligatorio.")
 
         if not isinstance(employee_number, int):
             raise ValueError("El legajo debe ser un número entero.")
 
-        if legajo <= 0:
+        if employee_number <= 0:
             raise ValueError("El legajo debe ser mayor que cero.")
 
-        if not name or not name.strip():
+    def _normalize_name(self, name):
+        if name is None or not str(name).strip():
             raise ValueError("El nombre es obligatorio.")
 
-        name = " ".join(name.strip().split())
+        return " ".join(str(name).strip().split())
+
+    # ---------------------------------------------------------
+    # CREAR
+    # ---------------------------------------------------------
+
+    def create_employee(self, employee_number, name, active=True):
+        """
+        Crea un nuevo empleado.
+        """
+
+        self._validate_employee_number(employee_number)
+        normalized_name = self._normalize_name(name)
 
         if self.repository.exists(employee_number):
             raise ValueError(
@@ -39,8 +42,8 @@ class EmployeeService:
 
         employee = Employee(
             employee_number=employee_number,
-            name=name,
-            active=True
+            name=normalized_name,
+            active=bool(active)
         )
 
         return self.repository.save(employee)
@@ -76,8 +79,7 @@ class EmployeeService:
         Busca un empleado por legajo.
         """
 
-        if employee_number is None:
-            raise ValueError("El número de empleado es obligatorio.")
+        self._validate_employee_number(employee_number)
 
         employee = self.repository.get_by_employee_number(employee_number)
 
@@ -97,12 +99,10 @@ class EmployeeService:
         Busca empleados por nombre.
         """
 
-        if not name or not name.strip():
+        if not name or not str(name).strip():
             return []
 
-        name = name.strip()
-
-        return self.repository.find_by_name(name)
+        return self.repository.find_by_name(str(name).strip())
 
     # ---------------------------------------------------------
     # ACTUALIZAR
@@ -113,19 +113,8 @@ class EmployeeService:
         Actualiza los datos de un empleado.
         """
 
-        if employee_number is None:
-            raise ValueError("El legajo es obligatorio.")
-
-        if not isinstance(employee_number, int):
-            raise ValueError("El legajo debe ser un número entero.")
-
-        if employee_number <= 0:
-            raise ValueError("El legajo debe ser mayor que cero.")
-
-        if not name or not name.strip():
-            raise ValueError("El nombre es obligatorio.")
-
-        name = " ".join(name.strip().split())
+        self._validate_employee_number(employee_number)
+        normalized_name = self._normalize_name(name)
 
         if not self.repository.exists(employee_number):
             raise ValueError(
@@ -133,8 +122,8 @@ class EmployeeService:
             )
 
         employee = Employee(
-            =employee_number,
-            name=name,
+            employee_number=employee_number,
+            name=normalized_name,
             active=bool(active)
         )
 
@@ -151,7 +140,7 @@ class EmployeeService:
     # ACTIVAR
     # ---------------------------------------------------------
 
-    def activate_employee(self,employee_number):
+    def activate_employee(self, employee_number):
         """
         Activa un empleado.
         """
@@ -161,10 +150,7 @@ class EmployeeService:
         if employee.active:
             return employee
 
-        updated = self.repository.set_active(
-            employee_number,
-            True
-        )
+        updated = self.repository.set_active(employee_number, True)
 
         if not updated:
             raise ValueError(
@@ -179,7 +165,7 @@ class EmployeeService:
     # DESACTIVAR
     # ---------------------------------------------------------
 
-    def deactivate_employee(self,employee_number):
+    def deactivate_employee(self, employee_number):
         """
         Desactiva un empleado sin eliminarlo.
         """
@@ -189,10 +175,7 @@ class EmployeeService:
         if not employee.active:
             return employee
 
-        updated = self.repository.set_active(
-            employee_number,
-            False
-        )
+        updated = self.repository.set_active(employee_number, False)
 
         if not updated:
             raise ValueError(
@@ -204,14 +187,33 @@ class EmployeeService:
         return employee
 
     # ---------------------------------------------------------
+    # ELIMINAR
+    # ---------------------------------------------------------
+
+    def delete_employee(self, employee_number):
+        """
+        Elimina un empleado.
+        """
+
+        self._validate_employee_number(employee_number)
+
+        if not self.repository.exists(employee_number):
+            raise ValueError(
+                f"No existe un empleado con legajo {employee_number}."
+            )
+
+        return self.repository.delete(employee_number)
+
+    # ---------------------------------------------------------
     # EXISTE
     # ---------------------------------------------------------
 
-    def employee_exists(self,employee_number):
+    def employee_exists(self, employee_number):
         """
         Comprueba si existe un empleado.
         """
 
+        self._validate_employee_number(employee_number)
         return self.repository.exists(employee_number)
 
     # ---------------------------------------------------------

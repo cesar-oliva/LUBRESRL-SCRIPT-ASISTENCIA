@@ -21,37 +21,37 @@ async function handleResponse(response) {
     return response.json();
 }
 
-export async function getEmployees() {
-    const response = await fetch(`${API_URL}/employees`);
+export async function getTurns() {
+    const response = await fetch(`${API_URL}/turns`);
     return handleResponse(response);
 }
 
-export async function createEmployee(employee) {
-    const response = await fetch(`${API_URL}/employees`, {
+export async function createTurn(turn) {
+    const response = await fetch(`${API_URL}/turns`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(employee)
+        body: JSON.stringify(turn)
     });
 
     return handleResponse(response);
 }
 
-export async function updateEmployee(employeeNumber, employee) {
-    const response = await fetch(`${API_URL}/employees/${employeeNumber}`, {
+export async function updateTurn(turnId, turn) {
+    const response = await fetch(`${API_URL}/turns/${turnId}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(employee)
+        body: JSON.stringify(turn)
     });
 
     return handleResponse(response);
 }
 
-export async function deleteEmployee(employeeNumber) {
-    const response = await fetch(`${API_URL}/employees/${employeeNumber}`, {
+export async function deleteTurn(turnId) {
+    const response = await fetch(`${API_URL}/turns/${turnId}`, {
         method: 'DELETE'
     });
 

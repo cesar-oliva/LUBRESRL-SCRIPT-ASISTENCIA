@@ -21,37 +21,37 @@ async function handleResponse(response) {
     return response.json();
 }
 
-export async function getEmployees() {
-    const response = await fetch(`${API_URL}/employees`);
+export async function getHolidays() {
+    const response = await fetch(`${API_URL}/holidays`);
     return handleResponse(response);
 }
 
-export async function createEmployee(employee) {
-    const response = await fetch(`${API_URL}/employees`, {
+export async function createHoliday(holiday) {
+    const response = await fetch(`${API_URL}/holidays`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(employee)
+        body: JSON.stringify(holiday)
     });
 
     return handleResponse(response);
 }
 
-export async function updateEmployee(employeeNumber, employee) {
-    const response = await fetch(`${API_URL}/employees/${employeeNumber}`, {
+export async function updateHoliday(holidayId, holiday) {
+    const response = await fetch(`${API_URL}/holidays/${holidayId}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(employee)
+        body: JSON.stringify(holiday)
     });
 
     return handleResponse(response);
 }
 
-export async function deleteEmployee(employeeNumber) {
-    const response = await fetch(`${API_URL}/employees/${employeeNumber}`, {
+export async function deleteHoliday(holidayId) {
+    const response = await fetch(`${API_URL}/holidays/${holidayId}`, {
         method: 'DELETE'
     });
 

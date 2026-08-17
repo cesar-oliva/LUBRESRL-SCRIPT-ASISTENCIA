@@ -5,12 +5,16 @@ import { renderLayout } from './components/layout/layout.js';
 import { renderHome } from './pages/home.js';
 import { renderEmployees } from './pages/employees.js';
 import { renderTurns } from './pages/turns.js';
+import { renderHolidays } from './pages/holidays.js';
+import { renderReports } from './pages/reports.js';
 
 
 const routes = {
     home: renderHome,
     employees: renderEmployees,
-    turns: renderTurns
+    turns: renderTurns,
+    holidays: renderHolidays,
+    reports: renderReports
 };
 
 

@@ -12,7 +12,6 @@ frontend/dist/
 *.db
 *.sqlite
 *.sqlite3
-data/*.db
 
 # Environment
 .env

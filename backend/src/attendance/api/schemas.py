@@ -81,3 +81,97 @@ class EmployeeTurnUpdate(BaseModel):
 class EmployeeTurnResponse(BaseModel):
     day_of_week: int
     turn: Optional[TurnResponse] = None
+
+
+# =========================================================
+# HOLIDAY
+# =========================================================
+
+class HolidayCreate(BaseModel):
+    date: str
+    reason: str
+    active: bool = True
+
+
+class HolidayUpdate(BaseModel):
+    date: str
+    reason: str
+    active: bool = True
+
+
+class HolidayResponse(BaseModel):
+    id: int
+    date: str
+    reason: str
+    active: bool
+
+
+# =========================================================
+# ATTENDANCE IMPORT / REPORT
+# =========================================================
+
+class AttendancePreviewEntryResponse(BaseModel):
+    employee_number: int
+    employee_name: str
+    date: str
+    turn: Optional[str] = None
+    expected_entry: Optional[str] = None
+    actual_entry: Optional[str] = None
+    expected_exit: Optional[str] = None
+    actual_exit: Optional[str] = None
+    status: str
+    observation: Optional[str] = None
+    minutes_late: int = 0
+    minutes_early: int = 0
+    state: str
+
+
+class AttendancePreviewSummaryResponse(BaseModel):
+    total_employees: int
+    total_turns_analyzed: int
+    total_imported: int
+    duplicated_records: int
+    late_arrivals: int
+    early_departures: int
+    missing_records: int
+    inconsistent_records: int
+
+
+class AttendancePreviewResponse(BaseModel):
+    entries: List[AttendancePreviewEntryResponse]
+    summary: AttendancePreviewSummaryResponse
+    errors: List[str] = Field(default_factory=list)
+
+
+class AttendanceImportConfirmRequest(BaseModel):
+    period: str
+    entries: List[AttendancePreviewEntryResponse] = Field(default_factory=list)
+    replace_existing: bool = True
+
+
+class AttendanceImportConfirmResponse(BaseModel):
+    saved: int
+    period: str
+    entries: List["AttendanceReportResponse"]
+
+
+class AttendanceReportResponse(BaseModel):
+    id: int
+    period: str
+    employee_number: int
+    employee_name: str
+    report_date: str
+    turn_code: Optional[str] = None
+    expected_entry: Optional[str] = None
+    actual_entry: Optional[str] = None
+    expected_exit: Optional[str] = None
+    actual_exit: Optional[str] = None
+    status: str
+    observation: Optional[str] = None
+    minutes_late: int = 0
+    minutes_early: int = 0
+    active: bool
+
+
+class AttendanceObservationUpdateRequest(BaseModel):
+    observation: str
