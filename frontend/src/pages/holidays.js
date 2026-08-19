@@ -4,6 +4,7 @@ import {
     updateHoliday,
     deleteHoliday
 } from '../services/holidayService.js';
+import '../styles/holidays.css';
 
 export async function renderHolidays(container) {
     container.innerHTML = `

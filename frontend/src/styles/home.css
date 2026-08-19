@@ -163,8 +163,7 @@
    CARD COLORS
    ========================================================= */
 
-.dashboard-card[data-navigate="employees"]
-.dashboard-card {
+.dashboard-card[data-navigate="employees"]{
     border-left: 4px solid var(--color-primary);
 }
 
@@ -174,7 +173,7 @@
 }
 
 
-.dashboard-card[data-navigate="attendance"] {
+.dashboard-card[data-navigate="holidays"] {
     border-left: 4px solid var(--color-success);
 }
 

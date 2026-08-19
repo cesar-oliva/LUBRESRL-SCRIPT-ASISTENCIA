@@ -4,11 +4,11 @@ import {
     updateTurn,
     deleteTurn
 } from '../services/turnService.js';
-import '../styles/employees.css';
+import '../styles/turns.css';
 
 export async function renderTurns(container) {
     container.innerHTML = `
-        <div class="employees-page">
+        <div class="turns-page">
             <div class="page-header">
                 <div>
                     <h2>Turnos</h2>
@@ -32,16 +32,16 @@ export async function renderTurns(container) {
                     </button>
                 </div>
 
-                <div class="employees-table-container">
+                <div class="turns-table-container">
                     <p>Cargando turnos...</p>
                 </div>
             </section>
         </div>
 
-        <div class="employee-modal hidden" data-role="turn-modal">
-            <div class="employee-modal-backdrop" data-action="close-modal"></div>
-            <div class="employee-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="turn-modal-title">
-                <div class="employee-modal-header">
+        <div class="turn-modal hidden" data-role="turn-modal">
+            <div class="turn-modal-backdrop" data-action="close-modal"></div>
+            <div class="turn-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="turn-modal-title">
+                <div class="turn-modal-header">
                     <h3 id="turn-modal-title">Turno</h3>
                     <div class="header-actions">
                         <button type="button" class="secondary-button small-button" data-action="go-home">Inicio</button>
@@ -89,7 +89,7 @@ export async function renderTurns(container) {
         </div>
     `;
 
-    const tableContainer = container.querySelector('.employees-table-container');
+    const tableContainer = container.querySelector('.turns-table-container');
     const modal = container.querySelector('[data-role="turn-modal"]');
     const form = container.querySelector('[data-role="turn-form"]');
 
@@ -196,7 +196,7 @@ function bindTurnActions(container, turns, modal, form) {
             try {
                 await deleteTurn(turnId);
                 const refreshedTurns = await getTurns();
-                renderTurnsTable(container.querySelector('.employees-table-container'), refreshedTurns);
+                renderTurnsTable(container.querySelector('.turns-table-container'), refreshedTurns);
                 bindTurnActions(container, refreshedTurns, modal, form);
             } catch (error) {
                 alert(error.message || 'No se pudo eliminar el turno.');
@@ -333,7 +333,7 @@ function renderTurnsTable(container, turns) {
                             <td>${turn.name}</td>
                             <td>${schedule}</td>
                             <td>
-                                <span class="employee-status ${statusClass}">${statusText}</span>
+                                <span class="turn-status ${statusClass}">${statusText}</span>
                             </td>
                             <td>
                                 <div class="table-actions">
