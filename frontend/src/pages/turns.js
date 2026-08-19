@@ -271,10 +271,10 @@ function openTurnModal(modal, form, turn = null) {
         form.querySelector('[name="name"]').value = turn.name;
         form.querySelector('[name="active"]').checked = turn.active;
 
-        form.querySelector('#turn-modal-title').textContent = 'Editar turno';
+        modal.querySelector('#turn-modal-title').textContent = 'Editar turno';
     } else {
         form.querySelector('[name="turn_id_hidden"]').value = '';
-        form.querySelector('#turn-modal-title').textContent = 'Nuevo turno';
+        modal.querySelector('#turn-modal-title').textContent = 'Nuevo turno';
     }
 }
 
@@ -284,7 +284,7 @@ function closeTurnModal(modal, form) {
     form.dataset.mode = 'create';
     form.querySelector('[name="turn_id_hidden"]').value = '';
     form.querySelector('[data-role="periods-container"]').innerHTML = '';
-    form.querySelector('#turn-modal-title').textContent = 'Nuevo turno';
+    modal.querySelector('#turn-modal-title').textContent = 'Nuevo turno';
 }
 
 function formatTurnSchedule(turn) {

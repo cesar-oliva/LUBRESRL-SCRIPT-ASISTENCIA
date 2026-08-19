@@ -1,5 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.1.13:8082';
-
+const API_URL = import.meta.env.VITE_API_URL;
 async function handleResponse(response) {
     const contentType = response.headers.get('content-type') || '';
     const payload = contentType.includes('application/json')

@@ -188,11 +188,11 @@ function openEmployeeModal(modal, form, employee = null) {
         form.querySelector('[name="employee_number"]').readOnly = true;
         form.querySelector('[name="name"]').value = employee.name;
         form.querySelector('[name="active"]').checked = employee.active;
-        form.querySelector('#employee-modal-title').textContent = 'Editar empleado';
+        modal.querySelector('#employee-modal-title').textContent = 'Editar empleado';
     } else {
         form.querySelector('[name="employee_number"]').readOnly = false;
         form.querySelector('[name="employee_number_hidden"]').value = '';
-        form.querySelector('#employee-modal-title').textContent = 'Nuevo empleado';
+        modal.querySelector('#employee-modal-title').textContent = 'Nuevo empleado';
     }
 }
 
@@ -202,7 +202,7 @@ function closeEmployeeModal(modal, form) {
     form.dataset.mode = 'create';
     form.querySelector('[name="employee_number_hidden"]').value = '';
     form.querySelector('[name="employee_number"]').readOnly = false;
-    form.querySelector('#employee-modal-title').textContent = 'Nuevo empleado';
+    modal.querySelector('#employee-modal-title').textContent = 'Nuevo empleado';
 }
 
 function renderEmployeesTable(container, employees) {

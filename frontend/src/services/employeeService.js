@@ -1,59 +1,32 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.1.13:8082';
+import { apiFetch } from '../api/client';
 
-async function handleResponse(response) {
-    if (!response.ok) {
-        let message = 'Error en la solicitud';
-
-        try {
-            const errorData = await response.json();
-            message = errorData.detail || message;
-        } catch {
-            // Ignorar errores sin JSON
-        }
-
-        throw new Error(message);
-    }
-
-    if (response.status === 204) {
-        return null;
-    }
-
-    return response.json();
+export function getEmployees() {
+    return apiFetch('/employees');
 }
 
-export async function getEmployees() {
-    const response = await fetch(`${API_URL}/employees`);
-    return handleResponse(response);
-}
-
-export async function createEmployee(employee) {
-    const response = await fetch(`${API_URL}/employees`, {
+export function createEmployee(employee) {
+    return apiFetch('/employees', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(employee)
     });
-
-    return handleResponse(response);
 }
 
-export async function updateEmployee(employeeNumber, employee) {
-    const response = await fetch(`${API_URL}/employees/${employeeNumber}`, {
+
+export function updateEmployee(employeeNumber, employee) {
+    return apiFetch(`/employees/${employeeNumber}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(employee)
     });
-
-    return handleResponse(response);
 }
 
-export async function deleteEmployee(employeeNumber) {
-    const response = await fetch(`${API_URL}/employees/${employeeNumber}`, {
+export function deleteEmployee(employeeNumber)  {
+    return apiFetch(`/employees/${employeeNumber}`, {
         method: 'DELETE'
     });
-
-    return handleResponse(response);
 }

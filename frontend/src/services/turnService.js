@@ -1,59 +1,33 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.1.13:8082';
+import { apiFetch } from '../api/client';
 
-async function handleResponse(response) {
-    if (!response.ok) {
-        let message = 'Error en la solicitud';
 
-        try {
-            const errorData = await response.json();
-            message = errorData.detail || message;
-        } catch {
-            // Ignorar errores sin JSON
-        }
-
-        throw new Error(message);
-    }
-
-    if (response.status === 204) {
-        return null;
-    }
-
-    return response.json();
+export function getTurns() {
+    return apiFetch('/turns');
 }
 
-export async function getTurns() {
-    const response = await fetch(`${API_URL}/turns`);
-    return handleResponse(response);
-}
-
-export async function createTurn(turn) {
-    const response = await fetch(`${API_URL}/turns`, {
+export function createTurn(turn) {
+    return apiFetch('/turns', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(turn)
     });
-
-    return handleResponse(response);
 }
 
-export async function updateTurn(turnId, turn) {
-    const response = await fetch(`${API_URL}/turns/${turnId}`, {
+
+export function updateTurn(turnId, turn)  {
+    return apiFetch(`/turns/${turnId}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(turn)
     });
-
-    return handleResponse(response);
 }
 
-export async function deleteTurn(turnId) {
-    const response = await fetch(`${API_URL}/turns/${turnId}`, {
+export function deleteTurn(turnId) {
+    return apiFetch(`/turns/${turnId}`, {
         method: 'DELETE'
     });
-
-    return handleResponse(response);
 }

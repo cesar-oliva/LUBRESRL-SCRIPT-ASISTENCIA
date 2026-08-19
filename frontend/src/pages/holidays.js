@@ -4,11 +4,10 @@ import {
     updateHoliday,
     deleteHoliday
 } from '../services/holidayService.js';
-import '../styles/employees.css';
 
 export async function renderHolidays(container) {
     container.innerHTML = `
-        <div class="employees-page">
+        <div class="holidays-page">
             <div class="page-header">
                 <div>
                     <h2>Feriados</h2>
@@ -32,16 +31,16 @@ export async function renderHolidays(container) {
                     </button>
                 </div>
 
-                <div class="employees-table-container">
+                <div class="holidays-table-container">
                     <p>Cargando feriados...</p>
                 </div>
             </section>
         </div>
 
-        <div class="employee-modal hidden" data-role="holiday-modal">
-            <div class="employee-modal-backdrop" data-action="close-modal"></div>
-            <div class="employee-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="holiday-modal-title">
-                <div class="employee-modal-header">
+        <div class="holiday-modal hidden" data-role="holiday-modal">
+            <div class="holiday-modal-backdrop" data-action="close-modal"></div>
+            <div class="holiday-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="holiday-modal-title">
+                <div class="holiday-modal-header">
                     <h3 id="holiday-modal-title">Feriado</h3>
                     <div class="header-actions">
                         <button type="button" class="secondary-button small-button" data-action="go-home">Inicio</button>
@@ -78,7 +77,7 @@ export async function renderHolidays(container) {
         </div>
     `;
 
-    const tableContainer = container.querySelector('.employees-table-container');
+    const tableContainer = container.querySelector('.holidays-table-container');
     const modal = container.querySelector('[data-role="holiday-modal"]');
     const form = container.querySelector('[data-role="holiday-form"]');
 
@@ -164,7 +163,7 @@ function bindHolidayActions(container, holidays, modal, form) {
             try {
                 await deleteHoliday(holidayId);
                 const refreshedHolidays = await getHolidays();
-                renderHolidaysTable(container.querySelector('.employees-table-container'), refreshedHolidays);
+                renderHolidaysTable(container.querySelector('.holidays-table-container'), refreshedHolidays);
                 bindHolidayActions(container, refreshedHolidays, modal, form);
             } catch (error) {
                 alert(error.message || 'No se pudo eliminar el feriado.');
@@ -183,10 +182,10 @@ function openHolidayModal(modal, form, holiday = null) {
         form.querySelector('[name="date"]').value = holiday.date;
         form.querySelector('[name="reason"]').value = holiday.reason;
         form.querySelector('[name="active"]').checked = holiday.active;
-        form.querySelector('#holiday-modal-title').textContent = 'Editar feriado';
+        modal.querySelector('#holiday-modal-title').textContent = 'Editar feriado';
     } else {
         form.querySelector('[name="holiday_id_hidden"]').value = '';
-        form.querySelector('#holiday-modal-title').textContent = 'Nuevo feriado';
+        modal.querySelector('#holiday-modal-title').textContent = 'Nuevo feriado';
     }
 }
 
@@ -195,7 +194,7 @@ function closeHolidayModal(modal, form) {
     form.reset();
     form.dataset.mode = 'create';
     form.querySelector('[name="holiday_id_hidden"]').value = '';
-    form.querySelector('#holiday-modal-title').textContent = 'Nuevo feriado';
+    modal.querySelector('#holiday-modal-title').textContent = 'Nuevo feriado';
 }
 
 function renderHolidaysTable(container, holidays) {
@@ -229,7 +228,7 @@ function renderHolidaysTable(container, holidays) {
                             <td>${holiday.date}</td>
                             <td>${holiday.reason}</td>
                             <td>
-                                <span class="employee-status ${statusClass}">${statusText}</span>
+                                <span class="holiday-status ${statusClass}">${statusText}</span>
                             </td>
                             <td>
                                 <div class="table-actions">
