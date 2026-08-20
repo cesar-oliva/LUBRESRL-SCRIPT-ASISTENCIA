@@ -2,7 +2,7 @@ import {
     importAttendancePreview,
     confirmAttendanceImport,
     getAttendanceReport
-} from '../services/attendanceService.js';
+} from '../services/reportService.js';
 import '../styles/reports.css';
 
 export async function renderReports(container) {

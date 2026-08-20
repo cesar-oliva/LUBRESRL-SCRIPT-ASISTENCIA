@@ -1,4 +1,3 @@
-import "../../styles/layout.css";
 
 export function renderLayout(container) {
     container.innerHTML = `

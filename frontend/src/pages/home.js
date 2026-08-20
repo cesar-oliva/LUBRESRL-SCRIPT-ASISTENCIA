@@ -1,4 +1,3 @@
-import "../styles/home.css";
 
 export function renderHome(container) {
 
