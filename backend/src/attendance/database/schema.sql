@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS employees (
     employee_number INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
+    sector TEXT NOT NULL DEFAULT '',
     active INTEGER NOT NULL DEFAULT 1
 );
 
@@ -42,10 +43,33 @@ CREATE TABLE IF NOT EXISTS employee_turns (
     UNIQUE (employee_number, day_of_week)
 );
 
+CREATE TABLE IF NOT EXISTS monthly_turn_assignments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    period TEXT NOT NULL,
+    assignment_date TEXT NOT NULL,
+    employee_number INTEGER NOT NULL,
+    assignment_code TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (employee_number)
+        REFERENCES employees(employee_number)
+        ON DELETE CASCADE,
+
+    UNIQUE (period, assignment_date, employee_number)
+);
+
 CREATE TABLE IF NOT EXISTS holidays (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     date TEXT NOT NULL UNIQUE,
     reason TEXT NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS special_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL,
     active INTEGER NOT NULL DEFAULT 1
 );
 

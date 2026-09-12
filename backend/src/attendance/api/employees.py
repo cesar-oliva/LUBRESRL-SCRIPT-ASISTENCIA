@@ -99,6 +99,7 @@ def create_employee(data: EmployeeCreate):
     employee = Employee(
         employee_number=data.employee_number,
         name=data.name,
+        sector=data.sector,
         active=data.active
     )
 
@@ -128,6 +129,7 @@ def update_employee(
     employee = Employee(
         employee_number=employee_number,
         name=data.name,
+        sector=data.sector,
         active=data.active
     )
 

@@ -5,6 +5,8 @@ const routes = {
     home: () => import('./pages/home.js'),
     employees: () => import('./pages/employees.js'),
     turns: () => import('./pages/turns.js'),
+    monthlyTurns: () => import('./pages/monthlyTurns.js'),
+    specialCodes: () => import('./pages/specialCodes.js'),
     holidays: () => import('./pages/holidays.js'),
     reports: () => import('./pages/reports.js')
 };

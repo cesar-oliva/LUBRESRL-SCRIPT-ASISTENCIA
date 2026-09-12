@@ -9,17 +9,20 @@ from typing import List, Optional
 class EmployeeCreate(BaseModel):
     employee_number: int
     name: str
+    sector: str = ""
     active: bool = True
 
 
 class EmployeeUpdate(BaseModel):
     name: str
+    sector: str = ""
     active: bool = True
 
 
 class EmployeeResponse(BaseModel):
     employee_number: int
     name: str
+    sector: str = ""
     active: bool
 
 
@@ -84,6 +87,20 @@ class EmployeeTurnResponse(BaseModel):
 
 
 # =========================================================
+# MONTHLY TURN ASSIGNMENTS
+# =========================================================
+
+class MonthlyTurnAssignment(BaseModel):
+    employee_number: int
+    assignment_date: str
+    assignment_code: str = Field(min_length=1, max_length=20)
+
+
+class MonthlyTurnPlanRequest(BaseModel):
+    assignments: List[MonthlyTurnAssignment] = Field(default_factory=list)
+
+
+# =========================================================
 # HOLIDAY
 # =========================================================
 
@@ -103,6 +120,29 @@ class HolidayResponse(BaseModel):
     id: int
     date: str
     reason: str
+    active: bool
+
+
+# =========================================================
+# SPECIAL CODES
+# =========================================================
+
+class SpecialCodeCreate(BaseModel):
+    code: str = Field(min_length=1, max_length=20)
+    description: str = Field(min_length=1, max_length=120)
+    active: bool = True
+
+
+class SpecialCodeUpdate(BaseModel):
+    code: str = Field(min_length=1, max_length=20)
+    description: str = Field(min_length=1, max_length=120)
+    active: bool = True
+
+
+class SpecialCodeResponse(BaseModel):
+    id: int
+    code: str
+    description: str
     active: bool
 
 

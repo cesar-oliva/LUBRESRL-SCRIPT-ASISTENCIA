@@ -85,6 +85,45 @@ export function renderHome(container) {
 
                 </div>
 
+                <div
+                    class="dashboard-card"
+                    data-navigate="monthlyTurns"
+                >
+
+                    <span class="dashboard-icon">
+                        📅
+                    </span>
+
+                    <div>
+
+                        <h3>
+                            Planilla mensual
+                        </h3>
+
+                        <p>
+                            Asignar turnos por día
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div
+                    class="dashboard-card"
+                    data-navigate="specialCodes"
+                >
+
+                    <span class="dashboard-icon">
+                        🏷️
+                    </span>
+
+                    <div>
+                        <h3>Códigos especiales</h3>
+                        <p>Definir eventos de planilla</p>
+                    </div>
+
+                </div>
+
 
                 <!-- FERIADOS -->
 

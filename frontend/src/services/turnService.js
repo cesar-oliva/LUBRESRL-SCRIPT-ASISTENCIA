@@ -5,6 +5,10 @@ export function getTurns() {
     return apiFetch('/turns');
 }
 
+export function getActiveTurns() {
+    return apiFetch('/turns/active');
+}
+
 export function createTurn(turn) {
     return apiFetch('/turns', {
         method: 'POST',

@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.attendance.api.employees import router as employees_router
 from src.attendance.api.turns import router as turns_router
 from src.attendance.api.employee_turns import router as employee_turns_router
+from src.attendance.api.monthly_turns import router as monthly_turns_router
+from src.attendance.api.special_codes import router as special_codes_router
 
 
 app = FastAPI(
@@ -27,6 +29,8 @@ app.add_middleware(
 app.include_router(employees_router)
 app.include_router(turns_router)
 app.include_router(employee_turns_router)
+app.include_router(monthly_turns_router)
+app.include_router(special_codes_router)
 
 
 @app.get("/")

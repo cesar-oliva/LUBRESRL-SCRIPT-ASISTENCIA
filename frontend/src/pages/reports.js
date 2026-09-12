@@ -234,8 +234,8 @@ export async function renderReports(container) {
 
 function normalizeReportRow(row) {
     return {
-        report_number: row.report_number,
-        report_name: row.report_name,
+        report_number: row.employee_number ?? row.report_number,
+        report_name: row.employee_name ?? row.report_name,
         date: row.date || row.report_date,
         turn: row.turn || row.turn_code,
         expected_entry: row.expected_entry,
@@ -328,8 +328,8 @@ function renderEntries(container, entries) {
                 ${entries.map((entry) => `
                     <tr>
                         <td>${escapeHtml(entry.date ?? '-')}</td>
-                        <td>${escapeHtml(String(entry.report_number ?? '-'))}</td>
-                        <td>${escapeHtml(entry.report_name ?? '-')}</td>
+                        <td>${escapeHtml(String(entry.employee_number ?? entry.report_number ?? '-'))}</td>
+                        <td>${escapeHtml(entry.employee_name ?? entry.report_name ?? '-')}</td>
                         <td>${escapeHtml(entry.turn ?? '-')}</td>
                         <td>${escapeHtml(entry.expected_entry ?? '-')}</td>
                         <td>${escapeHtml(entry.actual_entry ?? '-')}</td>

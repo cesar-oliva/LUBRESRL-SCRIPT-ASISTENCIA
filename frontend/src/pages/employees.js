@@ -63,6 +63,11 @@ export async function renderEmployees(container) {
                             <span>Nombre</span>
                             <input type="text" name="name" maxlength="120" required />
                         </label>
+
+                        <label class="field">
+                            <span>Puesto o sector</span>
+                            <input type="text" name="sector" maxlength="80" placeholder="Ej.: Vendedores" />
+                        </label>
                     </div>
 
                     <label class="checkbox-field">
@@ -118,6 +123,7 @@ export async function renderEmployees(container) {
         const employee = {
             employee_number: Number(formData.get('employee_number')),
             name: String(formData.get('name')).trim(),
+            sector: String(formData.get('sector') || '').trim(),
             active: formData.get('active') === 'on'
         };
 
@@ -127,6 +133,7 @@ export async function renderEmployees(container) {
             if (employeeNumber && form.dataset.mode === 'edit') {
                 await updateEmployee(employeeNumber, {
                     name: employee.name,
+                    sector: employee.sector,
                     active: employee.active
                 });
             } else {
@@ -187,6 +194,7 @@ function openEmployeeModal(modal, form, employee = null) {
         form.querySelector('[name="employee_number"]').value = employee.employee_number;
         form.querySelector('[name="employee_number"]').readOnly = true;
         form.querySelector('[name="name"]').value = employee.name;
+        form.querySelector('[name="sector"]').value = employee.sector || '';
         form.querySelector('[name="active"]').checked = employee.active;
         modal.querySelector('#employee-modal-title').textContent = 'Editar empleado';
     } else {
@@ -219,6 +227,7 @@ function renderEmployeesTable(container, employees) {
                 <tr>
                     <th>Legajo</th>
                     <th>Nombre</th>
+                    <th>Puesto / sector</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
@@ -233,6 +242,7 @@ function renderEmployeesTable(container, employees) {
                         <tr>
                             <td>${employee.employee_number}</td>
                             <td>${employee.name}</td>
+                            <td>${employee.sector || 'Sin sector'}</td>
                             <td>
                                 <span class="employee-status ${statusClass}">${statusText}</span>
                             </td>

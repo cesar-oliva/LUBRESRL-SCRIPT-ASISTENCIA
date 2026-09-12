@@ -10,6 +10,8 @@ from src.attendance.api.employee_turns import (
 from src.attendance.api.attendance_import import (
     router as attendance_import_router
 )
+from src.attendance.api.monthly_turns import router as monthly_turns_router
+from src.attendance.api.special_codes import router as special_codes_router
 
 
 app = FastAPI(
@@ -41,6 +43,8 @@ app.include_router(turns_router)
 app.include_router(holidays_router)
 app.include_router(employee_turns_router)
 app.include_router(attendance_import_router)
+app.include_router(monthly_turns_router)
+app.include_router(special_codes_router)
 
 
 # =========================================================

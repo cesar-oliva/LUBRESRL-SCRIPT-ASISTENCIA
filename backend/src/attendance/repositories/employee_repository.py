@@ -5,7 +5,14 @@ from src.attendance.database.connection import get_connection
 class EmployeeRepository:
 
     def __init__(self):
-        pass
+        connection = get_connection()
+        try:
+            columns = connection.execute("PRAGMA table_info(employees)").fetchall()
+            if columns and not any(row["name"] == "sector" for row in columns):
+                connection.execute("ALTER TABLE employees ADD COLUMN sector TEXT NOT NULL DEFAULT ''")
+                connection.commit()
+        finally:
+            connection.close()
 
     # ---------------------------------------------------------
     # CREATE
@@ -30,13 +37,15 @@ class EmployeeRepository:
                 INSERT INTO employees (
                     employee_number,
                     name,
+                    sector,
                     active
                 )
-                VALUES (?, ?, ?)
+                VALUES (?, ?, ?, ?)
                 """,
                 (
                     employee.employee_number,
                     employee.name,
+                    employee.sector,
                     int(employee.active)
                 )
             )
@@ -72,6 +81,7 @@ class EmployeeRepository:
                 SELECT
                     employee_number,
                     name,
+                    sector,
                     active
                 FROM employees
                 ORDER BY employee_number
@@ -82,6 +92,7 @@ class EmployeeRepository:
                 Employee(
                     employee_number=row["employee_number"],
                     name=row["name"],
+                    sector=row["sector"],
                     active=bool(row["active"])
                 )
                 for row in rows
@@ -110,6 +121,7 @@ class EmployeeRepository:
                 SELECT
                     employee_number,
                     name,
+                    sector,
                     active
                 FROM employees
                 WHERE employee_number = ?
@@ -123,6 +135,7 @@ class EmployeeRepository:
             return Employee(
                 employee_number=row["employee_number"],
                 name=row["name"],
+                sector=row["sector"],
                 active=bool(row["active"])
             )
 
@@ -151,6 +164,7 @@ class EmployeeRepository:
                 SELECT
                     employee_number,
                     name,
+                    sector,
                     active
                 FROM employees
                 WHERE name LIKE ?
@@ -163,6 +177,7 @@ class EmployeeRepository:
                 Employee(
                     employee_number=row["employee_number"],
                     name=row["name"],
+                    sector=row["sector"],
                     active=bool(row["active"])
                 )
                 for row in rows
@@ -191,6 +206,7 @@ class EmployeeRepository:
                 SELECT
                     employee_number,
                     name,
+                    sector,
                     active
                 FROM employees
                 WHERE active = 1
@@ -202,6 +218,7 @@ class EmployeeRepository:
                 Employee(
                     employee_number=row["employee_number"],
                     name=row["name"],
+                    sector=row["sector"],
                     active=True
                 )
                 for row in rows
@@ -232,11 +249,13 @@ class EmployeeRepository:
                 UPDATE employees
                 SET
                     name = ?,
+                    sector = ?,
                     active = ?
                 WHERE employee_number = ?
                 """,
                 (
                     employee.name,
+                    employee.sector,
                     int(employee.active),
                     employee.employee_number
                 )

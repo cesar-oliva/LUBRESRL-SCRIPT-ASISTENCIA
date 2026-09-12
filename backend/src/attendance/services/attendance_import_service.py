@@ -5,6 +5,9 @@ from src.attendance.repositories.attendance_report_repository import AttendanceR
 from src.attendance.repositories.employee_repository import EmployeeRepository
 from src.attendance.repositories.employee_turn_repository import EmployeeTurnRepository
 from src.attendance.repositories.turn_repository import TurnRepository
+from src.attendance.repositories.monthly_turn_assignment_repository import (
+    MonthlyTurnAssignmentRepository,
+)
 
 
 class AttendanceImportService:
@@ -16,11 +19,15 @@ class AttendanceImportService:
         employee_turn_repository=None,
         turn_repository=None,
         report_repository=None,
+        monthly_turn_assignment_repository=None,
     ):
         self.employee_repository = employee_repository or EmployeeRepository()
         self.employee_turn_repository = employee_turn_repository or EmployeeTurnRepository()
         self.turn_repository = turn_repository or TurnRepository()
         self.report_repository = report_repository or AttendanceReportRepository()
+        self.monthly_turn_assignment_repository = (
+            monthly_turn_assignment_repository or MonthlyTurnAssignmentRepository()
+        )
 
     def read_excel_rows(self, file_obj):
         from io import BytesIO
@@ -139,7 +146,14 @@ class AttendanceImportService:
                     status = "REGISTRO_INCONSISTENTE"
                     observation = "El legajo no existe en la base de datos."
                 else:
-                    turn = self._resolve_turn_for_day(employee_number, day_key, actual_entry, actual_exit)
+                    turn = self._resolve_turn_for_day(
+                        employee_number,
+                        day_key,
+                        actual_entry,
+                        actual_exit,
+                        period=period,
+                        tolerance_minutes=tolerance_minutes,
+                    )
                     expected_entry, expected_exit = self._resolve_expected_interval(turn, day_key, actual_entry, actual_exit)
                     minutes_late = self._compute_minutes_late(actual_entry, expected_entry, tolerance_minutes)
                     minutes_early = self._compute_minutes_early(actual_exit, expected_exit, tolerance_minutes)
@@ -298,7 +312,46 @@ class AttendanceImportService:
             grouped.setdefault(key, []).append(row)
         return grouped
 
-    def _resolve_turn_for_day(self, employee_number, day_key, actual_entry=None, actual_exit=None):
+    def _resolve_turn_for_day(
+        self,
+        employee_number,
+        day_key,
+        actual_entry=None,
+        actual_exit=None,
+        period=None,
+        tolerance_minutes=5,
+    ):
+        monthly_code = None
+        if period:
+            monthly_code = self.monthly_turn_assignment_repository.get_code(
+                period,
+                day_key,
+                employee_number,
+            )
+
+        if monthly_code:
+            monthly_turn = self.turn_repository.get_by_code(monthly_code)
+            if monthly_turn is not None and monthly_turn.active:
+                if self._entry_matches_turn(actual_entry, monthly_turn, day_key, tolerance_minutes):
+                    return monthly_turn
+
+                alternative = self._find_turn_matching_entry(
+                    actual_entry,
+                    actual_exit,
+                    day_key,
+                    tolerance_minutes,
+                )
+                if alternative is not None and alternative.code != monthly_turn.code:
+                    self.monthly_turn_assignment_repository.save_code(
+                        period,
+                        day_key,
+                        employee_number,
+                        alternative.code,
+                    )
+                    return alternative
+
+                return monthly_turn
+
         weekday = day_key.isoweekday()
         schedule = self.employee_turn_repository.get_employee_schedule(employee_number)
         for item in schedule:
@@ -345,6 +398,35 @@ class AttendanceImportService:
             )
 
         return None
+
+    def _find_turn_matching_entry(self, actual_entry, actual_exit, day_key, tolerance_minutes):
+        if not actual_entry:
+            return None
+
+        candidate = self._infer_turn_from_marks(actual_entry, actual_exit)
+        if candidate is None or not self._entry_matches_turn(
+            actual_entry,
+            candidate,
+            day_key,
+            tolerance_minutes,
+        ):
+            return None
+        return candidate
+
+    def _entry_matches_turn(self, actual_entry, turn, day_key, tolerance_minutes):
+        if not actual_entry or not turn or not getattr(turn, "periods", None):
+            return False
+
+        expected_entry = datetime.combine(
+            day_key,
+            self._parse_time(turn.periods[0].start_time),
+        )
+        difference = abs((actual_entry - expected_entry).total_seconds())
+        if difference > 12 * 3600:
+            expected_entry += timedelta(days=1 if actual_entry > expected_entry else -1)
+            difference = abs((actual_entry - expected_entry).total_seconds())
+
+        return difference <= tolerance_minutes * 60
 
     def _infer_turn_from_marks(self, actual_entry=None, actual_exit=None):
         turns = self.turn_repository.get_active() or self.turn_repository.get_all()

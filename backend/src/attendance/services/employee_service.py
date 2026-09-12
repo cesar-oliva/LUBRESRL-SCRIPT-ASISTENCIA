@@ -27,7 +27,7 @@ class EmployeeService:
     # CREAR
     # ---------------------------------------------------------
 
-    def create_employee(self, employee_number, name, active=True):
+    def create_employee(self, employee_number, name, active=True, sector=''):
         """
         Crea un nuevo empleado.
         """
@@ -43,6 +43,7 @@ class EmployeeService:
         employee = Employee(
             employee_number=employee_number,
             name=normalized_name,
+            sector=str(sector or '').strip(),
             active=bool(active)
         )
 
@@ -108,7 +109,7 @@ class EmployeeService:
     # ACTUALIZAR
     # ---------------------------------------------------------
 
-    def update_employee(self, employee_number, name, active=True):
+    def update_employee(self, employee_number, name, active=True, sector=''):
         """
         Actualiza los datos de un empleado.
         """
@@ -124,6 +125,7 @@ class EmployeeService:
         employee = Employee(
             employee_number=employee_number,
             name=normalized_name,
+            sector=str(sector or '').strip(),
             active=bool(active)
         )
 
