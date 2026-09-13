@@ -2,15 +2,15 @@ import { getEmployees } from '../services/employeeService.js';
 import { getActiveTurns } from '../services/turnService.js';
 import {
     getMonthlyTurnPlan,
-    saveMonthlyTurnPlan
+    importMonthlyTurnPlan,
+    downloadMonthlyTurnTemplate
 } from '../services/monthlyTurnService.js';
 import { getActiveSpecialCodes } from '../services/specialCodeService.js';
+import { getHolidays } from '../services/holidayService.js';
 import '../styles/monthly-turns.css';
 
 const dayFormatter = new Intl.DateTimeFormat('es-AR', { weekday: 'short' });
 const monthFormatter = new Intl.DateTimeFormat('es-AR', { month: 'long' });
-let copiedAssignmentCode = '';
-
 export async function renderMonthlyTurns(container) {
     container.innerHTML = `
         <div class="monthly-turns-page">
@@ -28,14 +28,31 @@ export async function renderMonthlyTurns(container) {
                         <span>Período</span>
                         <input type="month" data-role="period" required />
                     </label>
+                    <label class="field excel-field">
+                        <span>Importar Excel</span>
+                        <input type="file" data-role="excel-file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                    </label>
+                    <div class="excel-help">
+                        <small>Usá el formato del modelo para importar la planilla.</small>
+                        <div class="excel-format-preview" role="img" aria-label="Vista previa del formato Excel">
+                            <table>
+                                <thead>
+                                    <tr><th>Legajo</th><th>Empleado</th><th>Área</th><th>1</th><th>2</th><th>3</th><th>...</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>501</td><td>Nombre</td><td>Playa</td><td>T2</td><td>F</td><td>VAC</td><td>...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="template-button" type="button" data-action="download-template">Descargar modelo Excel</button>
+                    </div>
                     <div class="monthly-actions">
-                        <button class="secondary-button" type="button" data-action="copy-assignment">Copiar turno</button>
-                        <button class="secondary-button" type="button" data-action="paste-assignment">Pegar turno</button>
-                        <button class="primary-button" type="button" data-action="save-plan">Guardar planilla</button>
+                        <button class="secondary-button" type="button" data-action="import-plan">Cargar Excel</button>
+                        <button class="secondary-button" type="button" data-action="export-pdf">Exportar PDF</button>
                     </div>
                 </div>
                 <div class="monthly-message" data-role="message">Seleccioná un período para comenzar.</div>
-                <div class="monthly-shortcuts">Usá las flechas para moverte por las fechas. Atajos: Ctrl/Cmd+C copia y Ctrl/Cmd+V pega el turno seleccionado.</div>
+                <div class="monthly-shortcuts">El Excel debe tener una fila con la columna Legajo y columnas numeradas del 1 al último día del período.</div>
                 <div class="monthly-legend" data-role="legend"></div>
             </section>
 
@@ -51,73 +68,92 @@ export async function renderMonthlyTurns(container) {
     const grid = container.querySelector('[data-role="grid"]');
     const message = container.querySelector('[data-role="message"]');
     const legend = container.querySelector('[data-role="legend"]');
-    const saveButton = container.querySelector('[data-action="save-plan"]');
-    const copyButton = container.querySelector('[data-action="copy-assignment"]');
-    const pasteButton = container.querySelector('[data-action="paste-assignment"]');
+    const excelFile = container.querySelector('[data-role="excel-file"]');
+    const importButton = container.querySelector('[data-action="import-plan"]');
+    const templateButton = container.querySelector('[data-action="download-template"]');
+    const exportButton = container.querySelector('[data-action="export-pdf"]');
     const currentMonth = new Date().toISOString().slice(0, 7);
     periodInput.value = currentMonth;
 
     container.querySelector('[data-action="go-home"]').addEventListener('click', () => window.navigate('home'));
 
     try {
-        const [employees, turns, specialCodes] = await Promise.all([
+        const [employees, turns, specialCodes, holidays] = await Promise.all([
             getEmployees(),
             getActiveTurns(),
-            getActiveSpecialCodes()
+            getActiveSpecialCodes(),
+            getHolidays()
         ]);
-        renderLegend(legend, turns, specialCodes);
-        await loadPlan(periodInput.value, grid, message, turns, specialCodes);
+        renderLegend(legend, turns, specialCodes, holidays);
+        await loadPlan(periodInput.value, grid, message, turns, specialCodes, holidays);
 
-        periodInput.addEventListener('change', () => loadPlan(periodInput.value, grid, message, turns, specialCodes));
-        copyButton.addEventListener('click', () => copyFocusedAssignment(grid, message));
-        pasteButton.addEventListener('click', () => pasteAssignment(grid, message));
-        saveButton.addEventListener('click', async () => {
-            const assignments = collectAssignments(grid);
-            saveButton.disabled = true;
-            message.textContent = 'Guardando asignaciones...';
+        periodInput.addEventListener('change', () => loadPlan(periodInput.value, grid, message, turns, specialCodes, holidays));
+        exportButton.addEventListener('click', () => exportMonthlyPlanPdf(grid, legend, periodInput.value));
+        templateButton.addEventListener('click', async () => {
+            templateButton.disabled = true;
             try {
-                await saveMonthlyTurnPlan(periodInput.value, assignments);
-                message.textContent = `Planilla de ${formatPeriod(periodInput.value)} guardada.`;
+                await downloadMonthlyTurnTemplate(periodInput.value);
             } catch (error) {
-                message.textContent = error.message || 'No se pudo guardar la planilla.';
+                message.textContent = error.message || 'No se pudo descargar el modelo Excel.';
             } finally {
-                saveButton.disabled = false;
+                templateButton.disabled = false;
             }
         });
-
+        importButton.addEventListener('click', async () => {
+            if (!excelFile.files[0]) {
+                message.textContent = 'Seleccioná un archivo Excel .xlsx.';
+                return;
+            }
+            importButton.disabled = true;
+            message.textContent = 'Importando asignaciones...';
+            try {
+                const result = await importMonthlyTurnPlan(periodInput.value, excelFile.files[0]);
+                await loadPlan(periodInput.value, grid, message, turns, specialCodes, holidays);
+                message.textContent = `Se importaron ${result.saved} asignaciones de ${result.employees} empleado(s).`;
+                excelFile.value = '';
+            } catch (error) {
+                message.textContent = error.message || 'No se pudo importar el Excel.';
+            } finally {
+                importButton.disabled = false;
+            }
+        });
         grid.dataset.employeeCount = employees.length;
     } catch (error) {
         grid.innerHTML = `<p class="error-message">No se pudo cargar la planilla: ${escapeHtml(error.message)}</p>`;
-    }
 }
 
-async function loadPlan(period, grid, message, turns, specialCodes) {
+async function loadPlan(period, grid, message, turns, specialCodes, holidays) {
     if (!period) return;
     message.textContent = `Cargando ${formatPeriod(period)}...`;
     grid.innerHTML = '<div class="empty-state">Cargando planilla...</div>';
     try {
         const plan = await getMonthlyTurnPlan(period);
-        renderGrid(grid, plan, turns, specialCodes);
+        renderGrid(grid, plan, turns, specialCodes, holidays);
         message.textContent = `${plan.employees.length} empleado(s) · ${plan.dates.length} día(s) · ${formatPeriod(period)}`;
     } catch (error) {
         grid.innerHTML = `<p class="error-message">${escapeHtml(error.message || 'No se pudo cargar la planilla.')}</p>`;
     }
 }
 
-function renderGrid(container, plan, turns, specialCodes) {
-    const turnOptions = [
-        ...turns.map((turn) => ({ value: turn.code, label: formatTurnLabel(turn) })),
-        ...specialCodes.map((specialCode) => ({ value: specialCode.code, label: `${specialCode.code} · ${specialCode.description}` }))
-    ];
-    const optionsHtml = `<option value=""></option>${turnOptions.map((option) => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`).join('')}`;
-
+function renderGrid(container, plan, turns, specialCodes, holidays) {
+    const specialCodeValues = new Set(specialCodes.map((specialCode) => specialCode.code));
+    const holidaysByDate = new Map(
+        holidays
+            .filter((holiday) => holiday.active)
+            .map((holiday) => [holiday.date, holiday])
+    );
     container.innerHTML = `
         <table class="monthly-grid">
             <thead>
                 <tr>
                     <th class="employee-number-column">Legajo</th>
                     <th class="employee-name-column">Empleado</th>
-                    ${plan.dates.map((date) => `<th class="day-column"><span>${formatDay(date)}</span><strong>${date.slice(8, 10)}</strong></th>`).join('')}
+                    ${plan.dates.map((date) => {
+                        const holiday = holidaysByDate.get(date);
+                        const holidayClass = holiday ? ' holiday-column' : '';
+                        const holidayLabel = holiday ? ` title="Feriado: ${escapeHtml(holiday.reason)}"` : '';
+                        return `<th class="day-column${holidayClass}"${holidayLabel}><span>${formatDay(date)}</span><strong>${date.slice(8, 10)}</strong></th>`;
+                    }).join('')}
                 </tr>
             </thead>
             <tbody>
@@ -132,128 +168,88 @@ function renderGrid(container, plan, turns, specialCodes) {
                         <tr>
                             <td class="employee-number-cell">${employee.employee_number}</td>
                             <td class="employee-name-cell">${escapeHtml(employee.name)}</td>
-                            ${plan.dates.map((date) => `
-                                <td class="assignment-cell">
-                                    <select data-employee="${employee.employee_number}" data-date="${date}" aria-label="${escapeHtml(employee.name)} ${date}">
-                                        ${optionsHtml}
-                                    </select>
+                            ${plan.dates.map((date) => {
+                                const holiday = holidaysByDate.get(date);
+                                const holidayClass = holiday ? ' holiday-cell' : '';
+                                const holidayLabel = holiday ? ` title="Feriado: ${escapeHtml(holiday.reason)}"` : '';
+                                const value = employee.assignments?.[date] || '';
+                                const valueClass = value ? ' has-value' : '';
+                                const specialClass = specialCodeValues.has(value) ? ' special-code' : '';
+                                return `
+                                <td class="assignment-cell${holidayClass}${valueClass}"${holidayLabel}>
+                                    <span class="assignment-value${specialClass}">${escapeHtml(value)}</span>
                                 </td>
-                            `).join('')}
+                            `;
+                            }).join('')}
                         </tr>`;
                 }).join('')}
             </tbody>
         </table>
     `;
 
-    container.querySelectorAll('select').forEach((select) => {
-        const value = plan.employees.find((employee) => String(employee.employee_number) === select.dataset.employee)
-            ?.assignments?.[select.dataset.date] || '';
-        select.value = value;
-        select.classList.toggle('has-value', Boolean(value));
-        select.addEventListener('change', () => select.classList.toggle('has-value', Boolean(select.value)));
-        select.addEventListener('keydown', (event) => handleGridKeydown(event, select, container));
-    });
-}
-
-function handleGridKeydown(event, select, container) {
-    const isCopy = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c';
-    const isPaste = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v';
-
-    if (isCopy) {
-        event.preventDefault();
-        copyFocusedAssignment(container, null, select);
-        return;
-    }
-
-    if (isPaste) {
-        event.preventDefault();
-        pasteAssignment(container, null, select);
-        return;
-    }
-
-    const movement = {
-        ArrowLeft: [-1, 0],
-        ArrowRight: [1, 0],
-        ArrowUp: [0, -1],
-        ArrowDown: [0, 1]
-    }[event.key];
-
-    if (!movement) return;
-    event.preventDefault();
-
-    const selects = Array.from(container.querySelectorAll('select'));
-    const dates = [...new Set(selects.map((item) => item.dataset.date))];
-    const employees = [...new Set(selects.map((item) => item.dataset.employee))];
-    const dateIndex = dates.indexOf(select.dataset.date);
-    const employeeIndex = employees.indexOf(select.dataset.employee);
-    const nextDateIndex = Math.max(0, Math.min(dates.length - 1, dateIndex + movement[0]));
-    const nextEmployeeIndex = Math.max(0, Math.min(employees.length - 1, employeeIndex + movement[1]));
-    const target = selects.find((item) => (
-        item.dataset.date === dates[nextDateIndex]
-        && item.dataset.employee === employees[nextEmployeeIndex]
-    ));
-
-    if (target) {
-        target.focus();
-        target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
     }
 }
 
-function copyFocusedAssignment(container, message, focusedSelect = document.activeElement) {
-    if (!focusedSelect || focusedSelect.tagName !== 'SELECT' || !container.contains(focusedSelect)) {
-        if (message) message.textContent = 'Seleccioná una celda con turno para copiar.';
-        return;
-    }
-
-    if (!focusedSelect.value) {
-        if (message) message.textContent = 'La celda seleccionada no tiene un turno para copiar.';
-        return;
-    }
-
-    copiedAssignmentCode = focusedSelect.value;
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(copiedAssignmentCode).catch(() => {});
-    }
-    if (message) message.textContent = `Turno ${copiedAssignmentCode} copiado. Elegí otra celda y pegalo.`;
-}
-
-function pasteAssignment(container, message, focusedSelect = document.activeElement) {
-    if (!focusedSelect || focusedSelect.tagName !== 'SELECT' || !container.contains(focusedSelect)) {
-        if (message) message.textContent = 'Seleccioná una celda para pegar el turno.';
-        return;
-    }
-
-    if (!copiedAssignmentCode) {
-        if (message) message.textContent = 'Todavía no hay un turno copiado.';
-        return;
-    }
-
-    const optionExists = Array.from(focusedSelect.options).some((option) => option.value === copiedAssignmentCode);
-    if (!optionExists) {
-        if (message) message.textContent = `El turno ${copiedAssignmentCode} no está disponible en este período.`;
-        return;
-    }
-
-    focusedSelect.value = copiedAssignmentCode;
-    focusedSelect.classList.add('has-value');
-    focusedSelect.dispatchEvent(new Event('change', { bubbles: true }));
-    if (message) message.textContent = `Turno ${copiedAssignmentCode} pegado.`;
-}
-
-function collectAssignments(container) {
-    return Array.from(container.querySelectorAll('select'))
-        .filter((select) => select.value)
-        .map((select) => ({
-            employee_number: Number(select.dataset.employee),
-            assignment_date: select.dataset.date,
-            assignment_code: select.value
-        }));
-}
-
-function renderLegend(container, turns, specialCodes) {
+function renderLegend(container, turns, specialCodes, holidays) {
     container.innerHTML = turns.map((turn) => `<span><b>${escapeHtml(turn.code)}</b> ${escapeHtml(formatTurnSchedule(turn))}</span>`).concat(
         specialCodes.map((specialCode) => `<span><b>${escapeHtml(specialCode.code)}</b> ${escapeHtml(specialCode.description)}</span>`)
-    ).join('');
+    ).concat([
+        '<span class="legend-holiday"><b>Feriado</b> día no laborable</span>',
+        '<span class="legend-special"><b>Especial</b> código especial</span>'
+    ]).join('');
+}
+
+function exportMonthlyPlanPdf(grid, legend, period) {
+    const table = grid.querySelector('.monthly-grid');
+    if (!table) return;
+
+    const printWindow = window.open('', '_blank', 'width=1400,height=900');
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+        <!doctype html>
+        <html lang="es">
+        <head>
+            <meta charset="utf-8" />
+            <title>Planilla mensual ${escapeHtml(period)}</title>
+            <style>
+                @page { size: landscape; margin: 7mm; }
+                * { box-sizing: border-box; }
+                body { margin: 0; color: #172033; font-family: Arial, sans-serif; }
+                h1 { margin: 0 0 8px; font-size: 16px; }
+                .monthly-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 8px; font-size: 7px; }
+                .monthly-legend span { display: inline-block; }
+                .legend-holiday { color: #9a3412; }
+                .legend-special { color: #7e22ce; }
+                .monthly-grid { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 7px; }
+                .monthly-grid th, .monthly-grid td { border: 1px solid #cbd5e1; text-align: center; white-space: nowrap; }
+                .monthly-grid thead th { height: 27px; padding: 2px; background: #e2e8f0; font-size: 7px; }
+                .monthly-grid .employee-number-column { width: 40px; min-width: 40px; background: #dbeafe; }
+                .monthly-grid .employee-name-column { width: 115px; min-width: 115px; background: #dbeafe; text-align: left; }
+                .monthly-grid .day-column, .monthly-grid .assignment-cell { width: 25px; min-width: 25px; }
+                .monthly-grid .day-column span, .monthly-grid .day-column strong { display: block; line-height: 1.05; }
+                .monthly-grid .day-column span { font-size: 6px; }
+                .monthly-grid .day-column strong { font-size: 7px; }
+                .employee-number-cell, .employee-name-cell { padding: 2px; background: #fff; font-size: 7px; font-weight: 600; }
+                .employee-name-cell { text-align: left !important; }
+                .assignment-value { display: block; height: 22px; line-height: 22px; font-size: 7px; font-weight: 700; }
+                .assignment-cell.has-value { background: #dcfce7; }
+                .monthly-grid thead .holiday-column, .assignment-cell.holiday-cell { background: #fed7aa; color: #9a3412; }
+                .assignment-value.special-code { background: #f3e8ff; color: #7e22ce; }
+                .monthly-grid .sector-row th { padding: 3px 5px; background: #172033; color: #fff; text-align: left; font-size: 7px; }
+                @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+            </style>
+        </head>
+        <body>
+            <h1>Planilla mensual de turnos: ${escapeHtml(formatPeriod(period))}</h1>
+            ${legend.outerHTML}
+            ${table.outerHTML}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 250);
 }
 
 function formatTurnLabel(turn) {

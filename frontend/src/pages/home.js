@@ -25,7 +25,7 @@ export function renderHome(container) {
 
                 <p>
                     Desde este panel podrás administrar
-                    empleados, turnos y asistencia.
+                    todo el sistema.
                 </p>
 
             </section>
@@ -85,6 +85,7 @@ export function renderHome(container) {
 
                 </div>
 
+                <!-- PLANILLA MENSUAL -->
                 <div
                     class="dashboard-card"
                     data-navigate="monthlyTurns"
@@ -108,6 +109,7 @@ export function renderHome(container) {
 
                 </div>
 
+                <!-- CODIGOS ESPECIALES -->
                 <div
                     class="dashboard-card"
                     data-navigate="specialCodes"

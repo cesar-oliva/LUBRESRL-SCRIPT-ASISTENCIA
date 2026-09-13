@@ -90,32 +90,153 @@
 }
 
 .monthly-toolbar {
-    display: flex;
-    align-items: end;
-    justify-content: space-between;
-    gap: 16px;
+    display: grid;
+    grid-template-columns: 220px minmax(320px, 480px) minmax(260px, 1fr);
+    align-items: start;
+    gap: 24px;
 }
 
 .monthly-actions {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: flex-end;
     gap: 8px;
     flex-wrap: wrap;
+    align-self: end;
+    padding-bottom: 1px;
+    grid-column: 3;
+    grid-row: 2;
 }
 
 .month-field {
-    max-width: 220px;
+    width: 190px;
+    max-width: none;
+}
+
+.excel-field {
+    width: 100%;
+    min-width: 0;
+    max-width: 380px;
+}
+
+.excel-help {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 7px;
+    min-width: 0;
+}
+
+.excel-field input[type="file"] {
+    width: 100%;
+    min-height: 40px;
+    padding: 4px;
+    border: 1px solid var(--color-border-dark);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.excel-field input[type="file"]::file-selector-button {
+    margin-right: 8px;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: var(--color-primary-light);
+    color: var(--color-primary-dark);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.excel-field input[type="file"]::file-selector-button:hover {
+    background: var(--color-primary);
+    color: #fff;
+}
+
+.excel-field input[type="file"]:focus {
+    outline: 2px solid var(--color-primary-light);
+    border-color: var(--color-primary);
+}
+
+.excel-field small {
+    color: var(--color-text-muted);
+    font-size: 11px;
+    font-weight: 400;
+}
+
+.excel-format-preview {
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: #fff;
+}
+
+.excel-format-preview table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    color: var(--color-text-dark);
+    font-size: 9px;
+    font-weight: 400;
+}
+
+.excel-format-preview th,
+.excel-format-preview td {
+    padding: 4px 5px;
+    border-right: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.excel-format-preview th {
+    background: var(--color-primary-light);
+    font-weight: 700;
+}
+
+.excel-format-preview td:first-child,
+.excel-format-preview td:nth-child(4) {
+    background: var(--color-success-light);
+}
+
+.excel-format-preview td:nth-child(5) {
+    background: #fff7ed;
+    color: #9a3412;
+}
+
+.excel-format-preview td:nth-child(6) {
+    background: #f3e8ff;
+    color: #7e22ce;
+}
+
+.template-button {
+    align-self: flex-start;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-primary-dark);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.template-button:hover {
+    color: var(--color-primary);
 }
 
 .monthly-message {
-    margin-top: 14px;
+    margin-top: 20px;
     color: var(--color-text-secondary);
     font-size: 14px;
 }
 
 .monthly-shortcuts {
-    margin-top: 6px;
+    margin-top: 7px;
     color: var(--color-text-muted);
     font-size: 12px;
 }
@@ -135,14 +256,29 @@
     color: var(--color-text-dark);
 }
 
+.monthly-legend .legend-holiday {
+    color: #9a3412;
+}
+
+.monthly-legend .legend-special {
+    color: #7e22ce;
+}
+
 .monthly-grid-card {
     overflow: hidden;
     padding: 12px;
 }
 
 .monthly-grid-container {
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     max-height: calc(100vh - 260px);
+    scrollbar-width: none;
+}
+
+.monthly-grid-container::-webkit-scrollbar {
+    width: 0;
+    height: 0;
 }
 
 .monthly-grid {
@@ -150,7 +286,7 @@
     min-width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .monthly-grid th,
@@ -165,10 +301,11 @@
     position: sticky;
     top: 0;
     z-index: 3;
-    height: 48px;
-    padding: 5px;
+    height: 42px;
+    padding: 3px 2px;
     background: var(--color-surface-hover);
     color: var(--color-text-dark);
+    font-size: 11px;
     font-weight: 700;
 }
 
@@ -182,23 +319,28 @@
     position: sticky;
     left: 0;
     z-index: 4;
-    width: 72px;
-    min-width: 72px;
+    width: max-content;
+    min-width: max-content;
 }
 
 .employee-name-column,
 .employee-name-cell {
     position: sticky;
-    left: 72px;
+    left: 0;
     z-index: 4;
-    width: 190px;
-    min-width: 190px;
+    width: max-content;
+    min-width: max-content;
     text-align: left !important;
 }
 
 .monthly-grid thead .employee-number-column,
 .monthly-grid thead .employee-name-column {
     background: var(--color-primary-light);
+}
+
+.monthly-grid thead .holiday-column {
+    background: #fed7aa;
+    color: #9a3412;
 }
 
 .monthly-grid .sector-row th {
@@ -211,20 +353,21 @@
     text-align: left;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    font-size: 11px;
+    font-size: 10px;
 }
 
 .employee-number-cell,
 .employee-name-cell {
-    padding: 0 8px;
+    padding: 0 4px;
     background: var(--color-surface);
     color: var(--color-text-dark);
+    font-size: 11px;
     font-weight: 600;
 }
 
 .day-column {
-    width: 56px;
-    min-width: 56px;
+    width: 30px;
+    min-width: 30px;
 }
 
 .day-column span,
@@ -232,44 +375,61 @@
     display: block;
 }
 
+.day-column span {
+    font-size: 9px;
+    line-height: 1.1;
+}
+
 .day-column strong {
-    margin-top: 3px;
-    font-size: 13px;
+    margin-top: 1px;
+    font-size: 11px;
+    line-height: 1.1;
 }
 
 .assignment-cell {
-    width: 56px;
-    min-width: 56px;
+    width: 30px;
+    min-width: 30px;
     padding: 0;
     background: #fff;
 }
 
-.assignment-cell select {
+.assignment-value {
+    display: block;
     width: 100%;
-    height: 38px;
-    padding: 0 2px;
-    border: 0;
-    border-radius: 0;
-    background: #fff;
+    height: 40px;
+    line-height: 40px;
     color: var(--color-text-dark);
     text-align: center;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 700;
 }
 
-.assignment-cell select:focus {
-    outline: 2px solid var(--color-primary);
-    outline-offset: -2px;
+.assignment-cell.has-value {
+    background: var(--color-success-light);
 }
 
-.assignment-cell select.has-value {
-    background: var(--color-success-light);
+.assignment-cell.holiday-cell {
+    background: #fff7ed;
+}
+
+.assignment-cell.holiday-cell {
+    background: #fff7ed;
+    color: #9a3412;
+}
+
+.assignment-value.special-code {
+    background: #f3e8ff;
+    color: #7e22ce;
 }
 
 @media (max-width: 700px) {
     .monthly-turns-page .page-header,
     .monthly-toolbar {
         align-items: stretch;
+        grid-template-columns: 1fr;
+    }
+
+    .monthly-turns-page .page-header {
         flex-direction: column;
     }
 
@@ -279,9 +439,17 @@
 
     .month-field {
         max-width: none;
+        width: 100%;
     }
 
-    .monthly-grid-container {
-        max-height: calc(100vh - 330px);
+    .excel-field {
+        max-width: none;
+    }
+
+    .monthly-actions {
+        align-self: stretch;
+        justify-content: flex-start;
+        grid-column: auto;
+        grid-row: auto;
     }
 }
