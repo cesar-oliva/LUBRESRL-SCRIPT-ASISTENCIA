@@ -235,6 +235,24 @@ Frontend disponible en:
 
 - http://127.0.0.1:5173
 
+### Configuración de conexión
+
+El frontend utiliza la variable `VITE_API_URL` para construir las solicitudes al backend. Por ejemplo, en `frontend/.env`:
+
+```env
+VITE_API_URL=http://127.0.0.1:8000
+```
+
+Si el frontend y el backend se ejecutan en equipos o puertos diferentes, se debe actualizar esta URL y reiniciar Vite para que tome el cambio. La API habilita CORS para los orígenes de desarrollo configurados.
+
+La base SQLite se crea o completa automáticamente cuando se importa `src.attendance.main`. También se puede inicializar manualmente con:
+
+```bash
+cd backend
+source .venv/bin/activate
+python -m src.attendance.database.init_db
+```
+
 ## Flujo recomendado de importación mensual
 
 1. Ir a Reportes en frontend.
@@ -295,6 +313,25 @@ En backend/requirements.txt están registradas, entre otras:
 - Módulos de códigos especiales y asignación mensual de turnos: operativos
 - Módulo reportes/importación: operativo con previsualización, validación, filtros, ordenamiento y exportación
 - Persistencia y consulta de reportes: operativas
+
+## Pruebas y validación
+
+Para ejecutar las pruebas del backend:
+
+```bash
+cd backend
+source .venv/bin/activate
+PYTHONPATH=. pytest -q
+```
+
+La validación del frontend se realiza generando el build de producción:
+
+```bash
+cd frontend
+npm run build
+```
+
+Antes de confirmar una importación se recomienda revisar los errores mostrados en la previsualización. La confirmación reemplaza los registros existentes del período seleccionado.
 
 Nota:
 
