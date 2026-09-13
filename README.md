@@ -1,8 +1,6 @@
 # Sistema de Asistencia
 
-Aplicación para gestión de asistencia con backend en FastAPI, frontend en Vite y base SQLite.
-
-El proyecto ya incluye ABM de empleados, turnos y feriados, además de un módulo de importación mensual de marcaciones (Excel CrossChex) con previsualización y confirmación de reporte.
+Aplicación web para gestionar empleados, turnos y feriados, e importar marcaciones de asistencia desde archivos Excel de CrossChex. El sistema genera una previsualización mensual, permite revisar cada marcación y guarda el reporte confirmado en SQLite.
 
 ## Objetivo
 
@@ -51,11 +49,16 @@ attendance/
 - CRUD de turnos
 - CRUD de feriados
 - Persistencia de turnos con múltiples períodos horarios
+- Asignación de turnos por empleado y día de la semana
+- Códigos especiales de asistencia
 - Importación de marcaciones desde Excel (CrossChex)
 - Previsualización de resultados antes de persistir
-- Confirmación y guardado de reporte mensual
+- Detección de duplicados por legajo y fecha/hora de marcación
+- Análisis de llegadas tarde, salidas anticipadas, faltantes e inconsistencias
+- Confirmación y guardado de reporte mensual, reemplazando el período anterior
 - Consulta de reporte guardado por período
 - Actualización de observación de registro de reporte
+- Inicialización automática del esquema SQLite al arrancar la API
 
 ### Frontend
 
@@ -63,11 +66,16 @@ attendance/
 - Pantalla de Empleados (ABM)
 - Pantalla de Turnos (ABM)
 - Pantalla de Feriados (ABM)
+- Pantalla de Códigos especiales (ABM)
+- Pantalla de asignación mensual de turnos
 - Pantalla de Reportes:
-  - import preview
-  - confirm import
-  - consulta por período
-  - tabla de resultados y resumen
+  - carga de archivo Excel CrossChex
+  - previsualización y confirmación de importación
+  - resumen con empleados, turnos, importados, duplicados, faltantes e inconsistentes
+  - detalle de marcaciones con resaltado rojo suave para registros fuera de horario
+  - filtro por empleado
+  - ordenamiento por legajo, nombre o fecha, ascendente o descendente
+  - exportación completa del detalle a Excel compatible (`.xls`), incluyendo observaciones
 
 ## Endpoints principales
 
@@ -111,6 +119,21 @@ attendance/
 - POST /attendance/import-confirm
 - GET /attendance/report/{period}
 - PUT /attendance/report/{report_id}
+
+### Turnos mensuales
+
+- GET /monthly-turns/{period}
+- PUT /monthly-turns/{period}
+- POST /monthly-turns/{period}/import
+- GET /monthly-turns/template/{period}
+
+### Códigos especiales
+
+- GET /special-codes
+- GET /special-codes/active
+- POST /special-codes
+- PUT /special-codes/{special_code_id}
+- DELETE /special-codes/{special_code_id}
 
 ## Base de datos
 
@@ -176,11 +199,45 @@ Frontend disponible en:
 
 1. Ir a Reportes en frontend.
 2. Seleccionar período (YYYY-MM).
-3. Cargar Excel exportado desde CrossChex.
-4. Ejecutar previsualización.
-5. Revisar resumen y detalle.
-6. Confirmar importación para persistir en attendance_reports.
-7. Consultar el mismo período para validar datos guardados.
+3. Seleccionar la tolerancia en minutos.
+4. Cargar el Excel exportado desde CrossChex.
+5. Ejecutar previsualización.
+6. Revisar el resumen y el detalle de marcaciones.
+7. Filtrar por empleado u ordenar el detalle por legajo, nombre o fecha.
+8. Exportar toda la previsualización a Excel si se necesita analizarla fuera del sistema.
+9. Confirmar la importación para persistir el reporte en `attendance_reports`.
+10. Consultar el mismo período para validar los datos guardados.
+
+## Formato de importación CrossChex
+
+El archivo debe ser Excel (`.xlsx` o `.xls`) y contener estas columnas:
+
+- `Usuario Nro.`: legajo del empleado.
+- `Fecha/Hora`: fecha y hora de la marcación.
+- `Registro`: tipo de marcación compatible con entrada o salida (`0` o `1`, según el formato exportado).
+
+Durante la previsualización:
+
+- Se ignoran filas vacías y se informan filas inválidas.
+- Se valida que el legajo exista en la base.
+- Una marcación es única por combinación de `legajo + fecha/hora`.
+- Dos empleados distintos pueden tener la misma fecha/hora sin que se consideren duplicados.
+- Las marcaciones válidas se agrupan por empleado y día para resolver los turnos.
+- Se marca como inconsistente un registro fuera del período seleccionado.
+
+## Reporte generado
+
+Cada registro del reporte puede incluir:
+
+- Empleado y legajo.
+- Fecha y turno resuelto.
+- Entrada y salida esperadas.
+- Entrada y salida reales.
+- Estado de asistencia.
+- Minutos de llegada tarde o salida anticipada.
+- Observación explicativa.
+
+Los estados principales son `EN_HORARIO`, `LLEGADA_TARDE`, `SALIDA_ANTICIPADA`, `LLEGADA_TARDE_Y_SALIDA_ANTICIPADA`, `SIN_REGISTRO_ENTRADA`, `SIN_REGISTRO_SALIDA`, `SIN_REGISTRO` y `REGISTRO_INCONSISTENTE`.
 
 ## Dependencias Python actuales
 
@@ -195,13 +252,16 @@ En backend/requirements.txt están registradas, entre otras:
 ## Estado actual
 
 - Módulos ABM (empleados, turnos, feriados): operativos
-- Módulo reportes/importación: operativo en flujo base
+- Módulos de códigos especiales y asignación mensual de turnos: operativos
+- Módulo reportes/importación: operativo con previsualización, validación, filtros, ordenamiento y exportación
 - Persistencia y consulta de reportes: operativas
 
 Nota:
 
 - Si el período seleccionado no coincide con las fechas del archivo, los registros pueden quedar como REGISTRO_INCONSISTENTE.
 - Cuando no existe asignación explícita de turno para un empleado/día, el sistema aplica inferencia de turno en base a turnos activos.
+- La API ejecuta la inicialización idempotente de `schema.sql` al arrancar, por lo que crea las tablas faltantes de SQLite automáticamente.
+- El frontend utiliza `VITE_API_URL` para configurar la URL de la API. En desarrollo puede definirse en `frontend/.env`.
 
 ## Comandos útiles
 
