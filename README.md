@@ -77,6 +77,46 @@ attendance/
   - ordenamiento por legajo, nombre o fecha, ascendente o descendente
   - exportación completa del detalle a Excel compatible (`.xls`), incluyendo observaciones
 
+## Planilla mensual de horarios
+
+La pantalla **Planilla mensual de turnos** permite consultar y administrar la asignación diaria de horarios para los empleados de un período `YYYY-MM`.
+
+Incluye:
+
+- Visualización de empleados activos agrupados por sector.
+- Columnas para cada día del mes seleccionado.
+- Identificación visual de feriados y días con asignaciones.
+- Leyenda con los turnos activos, sus períodos horarios y los códigos especiales disponibles.
+- Descarga de un modelo Excel con las columnas `Legajo`, `Empleado`, `Área` y los días del período.
+- Importación de una planilla Excel `.xlsx` usando el modelo descargado.
+- Validación de empleados y códigos antes de guardar las asignaciones.
+- Reemplazo de las asignaciones existentes del período al importar una nueva planilla.
+- Exportación de la planilla visible a PDF en formato horizontal.
+
+El Excel de la planilla mensual debe tener una fila de encabezados con `Legajo`, `Empleado`, `Área` y columnas numeradas desde `1` hasta el último día del mes. Cada celda diaria puede contener un código de turno activo o un código especial activo.
+
+Los códigos utilizados en las celdas se validan contra los turnos y códigos especiales activos. Un código inexistente o inactivo impide la importación.
+
+## Códigos especiales
+
+La pantalla **Códigos especiales** contiene el CRUD para administrar valores como `VAC` o `LIC` que pueden utilizarse en la planilla mensual.
+
+Cada código tiene:
+
+- Código normalizado en mayúsculas.
+- Descripción.
+- Estado activo o inactivo.
+
+Desde la interfaz se puede:
+
+- Listar todos los códigos registrados.
+- Crear un código nuevo.
+- Editar código, descripción y estado.
+- Eliminar un código.
+- Consultar qué códigos están activos y disponibles para la planilla mensual.
+
+El sistema evita duplicar un código especial existente o utilizar el mismo código que ya pertenece a un turno. Los códigos inactivos se conservan en el sistema, pero no pueden utilizarse en nuevas asignaciones mensuales.
+
 ## Endpoints principales
 
 ### Salud
