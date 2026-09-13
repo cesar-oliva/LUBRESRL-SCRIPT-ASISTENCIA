@@ -286,22 +286,14 @@ class AttendanceImportService:
         seen = set()
         unique = []
         duplicated = 0
-        counts_by_employee_day_registration = {}
 
         for row in ordered:
-            exact_key = (row["employee_number"], row["date_time"], row["registration"])
-            if exact_key in seen:
+            unique_key = (row["employee_number"], row["date_time"])
+            if unique_key in seen:
                 duplicated += 1
                 continue
-            seen.add(exact_key)
+            seen.add(unique_key)
             unique.append(row)
-
-            day_key = (row["employee_number"], row["date_time"].date(), row["registration"])
-            counts_by_employee_day_registration[day_key] = counts_by_employee_day_registration.get(day_key, 0) + 1
-
-        for count in counts_by_employee_day_registration.values():
-            if count > 1:
-                duplicated += count - 1
 
         return unique, duplicated
 

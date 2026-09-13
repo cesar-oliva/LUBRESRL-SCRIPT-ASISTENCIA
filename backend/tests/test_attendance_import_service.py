@@ -167,7 +167,18 @@ def test_import_multiple_marks_for_same_employee(service):
 
     result = service.process_rows(rows, period="2026-07", tolerance_minutes=5)
 
-    assert result["summary"]["duplicated_records"] >= 1
+    assert result["summary"]["duplicated_records"] == 0
+
+
+def test_import_same_schedule_for_different_employees_is_not_duplicate(service):
+    rows = [
+        _row(1001, "2026-07-13 08:00:00", 0),
+        _row(1002, "2026-07-13 08:00:00", 0),
+    ]
+
+    result = service.process_rows(rows, period="2026-07", tolerance_minutes=5)
+
+    assert result["summary"]["duplicated_records"] == 0
 
 
 def test_import_unsorted_rows(service):

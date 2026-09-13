@@ -19,7 +19,7 @@ export async function renderReports(container) {
                 </button>
             </div>
 
-            <section class="content-card" style="margin-bottom: 16px;">
+            <section class="content-card reports-upload-card">
                 <div class="content-card-header">
                     <div>
                         <h3>Importar archivo CrossChex</h3>
@@ -27,25 +27,24 @@ export async function renderReports(container) {
                     </div>
                 </div>
 
-                <form data-role="import-form">
-                    <div class="form-grid">
-                        <label class="field">
+                <form class="reports-toolbar" data-role="import-form">
+                        <label class="field report-period-field">
                             <span>Período (YYYY-MM)</span>
                             <input type="month" name="period" required />
                         </label>
 
-                        <label class="field">
+                        <label class="field report-tolerance-field">
                             <span>Tolerancia (minutos)</span>
                             <input type="number" name="tolerance" min="0" value="5" required />
                         </label>
-                    </div>
 
-                    <label class="field" style="margin-bottom: 16px;">
+                        <label class="field report-excel-field">
                         <span>Archivo Excel</span>
                         <input type="file" name="file" accept=".xlsx,.xls" required />
-                    </label>
+                        <small>Seleccioná el archivo CrossChex para generar la previsualización.</small>
+                        </label>
 
-                    <div class="table-actions">
+                    <div class="reports-actions">
                         <button type="submit" class="primary-button">Previsualizar</button>
                         <button type="button" class="secondary-button" data-action="confirm-import" disabled>Confirmar importación</button>
                     </div>
@@ -95,6 +94,33 @@ export async function renderReports(container) {
                     </div>
                 </div>
 
+                <div class="report-detail-filters">
+                    <label class="field" for="attendance-employee-filter">
+                        <span>Filtrar por empleado</span>
+                        <select id="attendance-employee-filter" data-role="employee-filter" disabled>
+                            <option value="all">Todos los empleados</option>
+                        </select>
+                    </label>
+                    <label class="field" for="attendance-sort-field">
+                        <span>Ordenar por</span>
+                        <select id="attendance-sort-field" data-role="sort-field" disabled>
+                            <option value="employee_number">Legajo</option>
+                            <option value="employee_name">Nombre</option>
+                            <option value="date">Fecha</option>
+                        </select>
+                    </label>
+                    <label class="field" for="attendance-sort-direction">
+                        <span>Orden</span>
+                        <select id="attendance-sort-direction" data-role="sort-direction" disabled>
+                            <option value="asc">Ascendente</option>
+                            <option value="desc">Descendente</option>
+                        </select>
+                    </label>
+                    <button class="secondary-button report-export-button" type="button" data-action="export-report" disabled>
+                        Exportar Excel
+                    </button>
+                </div>
+
                 <div class="reports-table-container" data-role="results-container">
                     <div class="empty-state">No hay registros para mostrar.</div>
                 </div>
@@ -107,12 +133,17 @@ export async function renderReports(container) {
     const reportForm = container.querySelector('[data-role="report-form"]');
     const confirmButton = container.querySelector('[data-action="confirm-import"]');
     const resultsContainer = container.querySelector('[data-role="results-container"]');
+    const employeeFilter = container.querySelector('[data-role="employee-filter"]');
+    const sortField = container.querySelector('[data-role="sort-field"]');
+    const sortDirection = container.querySelector('[data-role="sort-direction"]');
+    const exportButton = container.querySelector('[data-action="export-report"]');
     const summaryContainer = container.querySelector('[data-role="summary-container"]');
     const summaryLabel = container.querySelector('[data-role="summary-label"]');
     const detailsLabel = container.querySelector('[data-role="details-label"]');
 
     let previewPeriod = null;
     let previewEntries = [];
+    let detailEntries = [];
 
     const currentMonth = new Date().toISOString().slice(0, 7);
     importForm.querySelector('[name="period"]').value = currentMonth;
@@ -145,11 +176,13 @@ export async function renderReports(container) {
 
             previewPeriod = period;
             previewEntries = Array.isArray(preview.entries) ? preview.entries : [];
+            detailEntries = previewEntries;
             const previewSummary = preview.summary || {};
             const errors = Array.isArray(preview.errors) ? preview.errors : [];
 
             renderSummary(summaryContainer, previewSummary, errors);
-            renderEntries(resultsContainer, previewEntries);
+            populateEmployeeFilter(employeeFilter, previewEntries);
+            updateDetailEntries();
 
             summaryLabel.textContent = `Previsualización lista para ${period}.`;
             detailsLabel.textContent = `${previewEntries.length} registro(s) analizado(s).`;
@@ -157,6 +190,7 @@ export async function renderReports(container) {
         } catch (error) {
             previewPeriod = null;
             previewEntries = [];
+            detailEntries = [];
             confirmButton.disabled = true;
 
             summaryLabel.textContent = 'No se pudo generar la previsualización.';
@@ -166,6 +200,8 @@ export async function renderReports(container) {
                 <p class="error-message">${error.message || 'Error desconocido en previsualización.'}</p>
             `;
             resultsContainer.innerHTML = '<div class="empty-state">No hay registros para mostrar.</div>';
+            populateEmployeeFilter(employeeFilter, []);
+            updateDetailEntries();
         }
     });
 
@@ -213,9 +249,11 @@ export async function renderReports(container) {
                 ? reportRows.map(normalizeReportRow)
                 : [];
 
+            detailEntries = normalizedRows;
             const calculatedSummary = summarizeEntries(normalizedRows);
             renderSummary(summaryContainer, calculatedSummary, []);
-            renderEntries(resultsContainer, normalizedRows);
+            populateEmployeeFilter(employeeFilter, normalizedRows);
+            updateDetailEntries();
 
             summaryLabel.textContent = `Reporte cargado para ${period}.`;
             detailsLabel.textContent = `${normalizedRows.length} registro(s) recuperado(s).`;
@@ -228,8 +266,39 @@ export async function renderReports(container) {
                 <p class="error-message">${error.message || 'Error desconocido al consultar el reporte.'}</p>
             `;
             resultsContainer.innerHTML = '<div class="empty-state">No hay registros para mostrar.</div>';
+            detailEntries = [];
+            populateEmployeeFilter(employeeFilter, []);
+            updateDetailEntries();
         }
     });
+
+    employeeFilter.addEventListener('change', () => {
+        updateDetailEntries();
+    });
+
+    sortField.addEventListener('change', updateDetailEntries);
+    sortDirection.addEventListener('change', updateDetailEntries);
+
+    exportButton.addEventListener('click', () => {
+        exportEntriesToExcel(detailEntries, previewPeriod || reportForm.querySelector('[name="report_period"]').value);
+    });
+
+    function updateDetailEntries() {
+        const selectedEmployee = employeeFilter.value;
+        const filteredEntries = detailEntries.filter((entry) => (
+            selectedEmployee === 'all'
+            || String(getEmployeeNumber(entry)) === selectedEmployee
+        ));
+        const sortedEntries = sortEntries(filteredEntries, sortField.value, sortDirection.value);
+
+        renderEntries(resultsContainer, sortedEntries);
+        detailsLabel.textContent = detailEntries.length === sortedEntries.length
+            ? `${sortedEntries.length} registro(s) mostrado(s).`
+            : `${sortedEntries.length} de ${detailEntries.length} registro(s) mostrado(s).`;
+        sortField.disabled = detailEntries.length === 0;
+        sortDirection.disabled = detailEntries.length === 0;
+        exportButton.disabled = detailEntries.length === 0;
+    }
 }
 
 function normalizeReportRow(row) {
@@ -251,7 +320,7 @@ function normalizeReportRow(row) {
 
 function summarizeEntries(entries) {
     const summary = {
-        total_reports: new Set(entries.map((item) => item.report_number)).size,
+        total_employees: new Set(entries.map((item) => item.report_number)).size,
         total_turns_analyzed: entries.length,
         total_imported: entries.length,
         duplicated_records: 0,
@@ -285,7 +354,7 @@ function renderSummary(container, summary, errors) {
     container.innerHTML = `
         <table class="data-table">
             <tbody>
-                <tr><th>Total empleados</th><td>${safeSummary.total_reports ?? 0}</td></tr>
+                <tr><th>Total empleados</th><td>${safeSummary.total_employees ?? 0}</td></tr>
                 <tr><th>Total turnos analizados</th><td>${safeSummary.total_turns_analyzed ?? 0}</td></tr>
                 <tr><th>Total importados</th><td>${safeSummary.total_imported ?? 0}</td></tr>
                 <tr><th>Duplicados</th><td>${safeSummary.duplicated_records ?? 0}</td></tr>
@@ -326,7 +395,7 @@ function renderEntries(container, entries) {
             </thead>
             <tbody>
                 ${entries.map((entry) => `
-                    <tr>
+                    <tr class="${entry.observation !== 'Marcación dentro del horario establecido.' ? 'report-row-alert' : ''}">
                         <td>${escapeHtml(entry.date ?? '-')}</td>
                         <td>${escapeHtml(String(entry.employee_number ?? entry.report_number ?? '-'))}</td>
                         <td>${escapeHtml(entry.employee_name ?? entry.report_name ?? '-')}</td>
@@ -342,6 +411,92 @@ function renderEntries(container, entries) {
             </tbody>
         </table>
     `;
+}
+
+function populateEmployeeFilter(filter, entries) {
+    const employees = new Map();
+
+    entries.forEach((entry) => {
+        const employeeNumber = getEmployeeNumber(entry);
+        if (employeeNumber !== undefined && employeeNumber !== null) {
+            const employeeName = entry.employee_name ?? entry.report_name ?? '';
+            employees.set(String(employeeNumber), employeeName);
+        }
+    });
+
+    filter.innerHTML = `
+        <option value="all">Todos los empleados</option>
+        ${Array.from(employees.entries())
+            .sort(([numberA], [numberB]) => numberA.localeCompare(numberB, undefined, { numeric: true }))
+            .map(([number, name]) => `
+                <option value="${escapeHtml(number)}">${escapeHtml(`${number} - ${name || 'Sin nombre'}`)}</option>
+            `)
+            .join('')}
+    `;
+    filter.disabled = employees.size === 0;
+}
+
+function getEmployeeNumber(entry) {
+    return entry.employee_number ?? entry.report_number;
+}
+
+function sortEntries(entries, field, direction) {
+    const multiplier = direction === 'desc' ? -1 : 1;
+
+    return [...entries].sort((entryA, entryB) => {
+        let valueA;
+        let valueB;
+
+        if (field === 'employee_number') {
+            valueA = Number(getEmployeeNumber(entryA));
+            valueB = Number(getEmployeeNumber(entryB));
+        } else if (field === 'employee_name') {
+            valueA = String(entryA.employee_name ?? entryA.report_name ?? '').toLocaleLowerCase();
+            valueB = String(entryB.employee_name ?? entryB.report_name ?? '').toLocaleLowerCase();
+        } else {
+            valueA = String(entryA.date ?? '');
+            valueB = String(entryB.date ?? '');
+        }
+
+        if (valueA < valueB) return -1 * multiplier;
+        if (valueA > valueB) return 1 * multiplier;
+        return 0;
+    });
+}
+
+function exportEntriesToExcel(entries, period) {
+    if (!Array.isArray(entries) || entries.length === 0) return;
+
+    const columns = [
+        ['Fecha', (entry) => entry.date],
+        ['Legajo', (entry) => getEmployeeNumber(entry)],
+        ['Empleado', (entry) => entry.employee_name ?? entry.report_name],
+        ['Turno', (entry) => entry.turn ?? entry.turn_code],
+        ['Entrada esperada', (entry) => entry.expected_entry],
+        ['Entrada real', (entry) => entry.actual_entry],
+        ['Salida esperada', (entry) => entry.expected_exit],
+        ['Salida real', (entry) => entry.actual_exit],
+        ['Estado', (entry) => entry.status ?? entry.state],
+        ['Observación', (entry) => entry.observation]
+    ];
+    const tableRows = entries.map((entry) => `
+        <tr>${columns.map(([, getValue]) => `<td>${escapeHtml(getValue(entry) ?? '')}</td>`).join('')}</tr>
+    `).join('');
+    const workbook = `
+        <html><head><meta charset="UTF-8"></head><body>
+            <table>
+                <thead><tr>${columns.map(([label]) => `<th>${escapeHtml(label)}</th>`).join('')}</tr></thead>
+                <tbody>${tableRows}</tbody>
+            </table>
+        </body></html>
+    `;
+    const blob = new Blob([`\ufeff${workbook}`], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `reporte-asistencia-${period || 'previsualizacion'}.xls`;
+    link.click();
+    URL.revokeObjectURL(url);
 }
 
 function escapeHtml(value) {
