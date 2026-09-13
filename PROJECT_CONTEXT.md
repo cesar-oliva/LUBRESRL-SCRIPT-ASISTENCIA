@@ -41,7 +41,7 @@ El sistema debe permitir gestionar:
 - Asignación de turnos a empleados según día de la semana.
 - Estado activo/inactivo de empleados.
 - Estado activo/inactivo de turnos.
-- Posteriormente, funcionalidades relacionadas con asistencia.
+- Importación, análisis y consulta de reportes de asistencia.
 
 El proyecto se está construyendo con separación de responsabilidades:
 
@@ -97,9 +97,13 @@ para obtener una conexión a SQLite.
 
 Responsables de la lógica de negocio y validaciones.
 
-Ejemplo confirmado:
+Services confirmados:
 
 - EmployeeService
+- TurnService
+- EmployeeTurnService
+- HolidayService
+- AttendanceImportService
 
 Los services utilizan repositories y no deberían ejecutar SQL
 directamente.
@@ -108,15 +112,24 @@ directamente.
 
 ## API
 
-Existe una carpeta `api`.
+Existe una carpeta `api` con routers FastAPI para empleados, turnos,
+feriados, asignaciones de turnos, importación de asistencia, planilla
+mensual y códigos especiales.
 
-La API será la capa utilizada por la aplicación web para comunicarse
-con los services.
+La API es la capa utilizada por la aplicación web para comunicarse con
+los services y repositories.
 
 NO crear una carpeta `web/` independiente sin una decisión explícita.
 
-La estructura exacta de `api` todavía debe documentarse con el árbol
-real del proyecto.
+Los routers actuales se encuentran en:
+
+    api/employees.py
+    api/turns.py
+    api/employee_turns.py
+    api/holidays.py
+    api/attendance_import.py
+    api/monthly_turns.py
+    api/special_codes.py
 
 ---
 
@@ -185,24 +198,22 @@ No crear una carpeta `web/` paralela.
 La funcionalidad web/API debe integrarse en la estructura `api`
 existente.
 
-### src/attendance/config/
-
-Contiene la configuración de la aplicación.
-
-El contenido exacto debe documentarse cuando se proporcionen sus
-archivos.
-
 ### src/attendance/database/
 
 Contiene la conexión y componentes relacionados con la base de datos.
 
-Existe actualmente:
+Existen actualmente:
 
     connection.py
+    init_db.py
+    schema.sql
 
-y se utiliza:
+Se utiliza:
 
     get_connection()
+
+`init_db.py` ejecuta el esquema idempotente y `main.py` lo invoca al
+arrancar la API para crear las tablas faltantes.
 
 La base de datos utilizada actualmente es SQLite.
 
@@ -215,6 +226,9 @@ Modelos confirmados:
     Employee
     Turn
     WorkPeriod
+    Holiday
+    SpecialCode
+    AttendanceReport
 
 ### src/attendance/repositories/
 
@@ -225,28 +239,26 @@ Repositories confirmados:
     EmployeeRepository
     TurnRepository
     EmployeeTurnRepository
+    HolidayRepository
+    SpecialCodeRepository
+    AttendanceReportRepository
 
 ### src/attendance/services/
 
 Contiene la lógica de negocio.
 
-Service confirmado:
+Services confirmados:
 
     EmployeeService
-
-Services previstos:
-
     TurnService
     EmployeeTurnService
-
-Estos deben implementarse respetando la arquitectura existente.
+    HolidayService
+    AttendanceImportService
 
 ### src/attendance/utils/
 
-Contiene utilidades reutilizables de la aplicación.
-
-El contenido exacto debe documentarse cuando se proporcionen sus
-archivos.
+Contiene el paquete de utilidades compartidas. Actualmente no contiene
+lógica de negocio principal.
 
 ---
 
@@ -256,7 +268,7 @@ Directorio:
 
     tests/
 
-Contendrá las pruebas automatizadas del proyecto.
+Contiene las pruebas automatizadas del proyecto.
 
 Las pruebas deben respetar la arquitectura existente y permitir
 probar principalmente:
@@ -266,8 +278,9 @@ probar principalmente:
 - Services.
 - API.
 
-No asumir todavía framework de testing hasta verificar la configuración
-real del proyecto.
+La configuración actual utiliza pytest; el comando recomendado es:
+
+    PYTHONPATH=. pytest -q
 
 ---
 
@@ -294,11 +307,11 @@ Directorio:
 
     data/
 
-Contiene los datos utilizados por la aplicación, incluyendo
-potencialmente la base de datos SQLite.
+Contiene los datos utilizados por la aplicación.
 
-No asumir todavía el nombre exacto del archivo de base de datos hasta
-revisar `database/connection.py` y la configuración.
+La base SQLite actual se encuentra en:
+
+    backend/data/attendance.db
 
 ---
 
@@ -1090,8 +1103,8 @@ Ejemplo:
 
     raise ValueError("El legajo es obligatorio.")
 
-La API deberá transformar posteriormente esos errores en respuestas
-HTTP apropiadas.
+La API transforma estos errores en respuestas HTTP apropiadas mediante
+FastAPI y `HTTPException`.
 
 No trasladar SQL ni detalles internos de SQLite directamente al cliente.
 
@@ -1105,6 +1118,10 @@ Tablas confirmadas por el código:
     turns
     turn_periods
     employee_turns
+    holidays
+    special_codes
+    monthly_turn_assignments
+    attendance_reports
 
 Relaciones conocidas:
 
@@ -1130,30 +1147,28 @@ cuando se elimina el turno correspondiente.
 
 # 18. ESTADO ACTUAL DEL PROYECTO
 
-Ya existe:
+La aplicación web está implementada con FastAPI, JavaScript ES Modules,
+Vite y SQLite.
 
-- Modelo Employee.
-- Modelo Turn.
-- Modelo WorkPeriod.
-- EmployeeRepository.
-- TurnRepository.
-- EmployeeTurnRepository.
-- EmployeeService.
-- Capa database con get_connection().
-- Carpeta API.
-- Aplicación inicial por consola en main.py.
+Componentes operativos:
 
-Pendiente o en desarrollo:
+- ABM de empleados, turnos, feriados y códigos especiales.
+- Turnos con múltiples períodos horarios.
+- Asignación de turnos por empleado y día de la semana.
+- Planilla mensual de turnos con consulta por período, modelo Excel,
+    importación `.xlsx` y exportación PDF.
+- Importación CrossChex con previsualización y confirmación mensual.
+- Detección de duplicados por legajo y fecha/hora.
+- Resumen y detalle de asistencia con filtros, ordenamiento y
+    exportación compatible con Excel.
+- Persistencia y consulta de reportes mensuales.
+- Inicialización automática del esquema SQLite al arrancar la API.
 
-- Revisar y completar la API.
-- Crear TurnService.
-- Crear EmployeeTurnService.
-- Conectar API con Services.
-- Revisar WorkPeriod y unificar su constructor.
-- Corregir EmployeeTurnRepository.
-- Definir endpoints HTTP.
-- Construir interfaz web si corresponde a la siguiente etapa.
-- Implementar funcionalidades completas de asistencia.
+La aplicación se ejecuta como servidor web mediante:
+
+        uvicorn src.attendance.main:app --reload
+
+El frontend se ejecuta con Vite y se conecta mediante `VITE_API_URL`.
 
 ---
 
@@ -1208,67 +1223,53 @@ Conceptualmente:
         ↓
     SQLite
 
-El usuario debería poder gestionar empleados y turnos desde la
-aplicación y posteriormente utilizar esa información para registrar y
-consultar asistencia.
+El usuario puede gestionar empleados, turnos, feriados, códigos
+especiales y asignaciones mensuales, además de importar, revisar,
+exportar y consultar reportes de asistencia.
 
 La implementación debe hacerse progresivamente sin romper las capas
 ya construidas.
 
 ---
 
-# 21. INFORMACIÓN QUE FALTA INCORPORAR A ESTE DOCUMENTO
+# 21. INFORMACIÓN DE REFERENCIA ACTUAL
 
-Para completar definitivamente este contexto, falta documentar el
-código real de:
+La documentación funcional de uso, instalación, endpoints y formatos
+de importación se mantiene en `README.md`.
 
-- Árbol completo del proyecto.
-- Contenido de `api/`.
-- Contenido completo de `models/`.
-- `EmployeeRepository`.
-- `database/connection.py`.
-- Esquema/migraciones de SQLite.
-- Definición exacta de `Turn`.
-- Definición exacta de `WorkPeriod`.
-- Definición exacta de `Employee`.
-- Endpoints API existentes, si ya existen.
-- Framework web/API utilizado.
-- Configuración actual de ejecución.
-- Requisitos funcionales finales del sistema.
+Para cambios futuros se debe verificar el código real antes de
+actualizar este contexto, especialmente:
 
-NO inventar esta información.
-
-Debe agregarse cuando sea proporcionada por el usuario.
+- `backend/src/attendance/api/` para endpoints y contratos HTTP.
+- `backend/src/attendance/services/` para reglas de negocio.
+- `backend/src/attendance/database/schema.sql` para tablas SQLite.
+- `frontend/src/pages/` para los flujos disponibles en la interfaz.
+- `frontend/src/services/` para las llamadas del frontend a la API.
 
 # 22. ESTRUCTURA DE FRONTEND
 
 frontend/
 └── src/
     ├── api/
-    │   ├── employeeApi.js
-    │   ├── turnApi.js
-    │   └── employeeTurnApi.js
-    │
-    ├── services/
-    │   ├── employeeService.js
-    │   ├── turnService.js
-    │   └── employeeTurnService.js
-    │
     ├── components/
-    │   ├── employees/
-    │   ├── turns/
-    │   └── schedules/
-    │
+    ├── pages/
+    │   ├── employees.js
+    │   ├── holidays.js
+    │   ├── home.js
+    │   ├── monthlyTurns.js
+    │   ├── reports.js
+    │   ├── specialCodes.js
+    │   └── turns.js
+    ├── services/
+    ├── styles/
+    ├── utils/
     ├── views/
-    │   ├── employeesView.js
-    │   ├── turnsView.js
-    │   └── schedulesView.js
-    │
-    └── utils/
+    ├── app.js
+    └── main.js
 
 ---
 
-# 23. ESTADO ACTUAL (2026-08-16)
+# 23. ESTADO ACTUAL (2026-09-13)
 
 ## 23.1 Funcionalidades completadas
 
@@ -1276,25 +1277,32 @@ frontend/
 - ABM completo de turnos en frontend/backend.
 - Soporte de turnos con múltiples períodos (ejemplo: T4 partido).
 - ABM completo de feriados en frontend/backend.
-- Navegación desde Home a Empleados, Turnos, Feriados y Reportes.
+- ABM completo de códigos especiales en frontend/backend.
+- Navegación desde Home a Empleados, Turnos, Feriados, códigos
+    especiales, planilla mensual y Reportes.
+- Planilla mensual de turnos con descarga de modelo, importación Excel
+    y exportación PDF.
 - Módulo de reportes en frontend con:
     - previsualización de importación,
     - confirmación de importación,
-    - consulta por período.
+    - consulta por período,
+    - filtro por empleado,
+    - ordenamiento por legajo, nombre o fecha,
+    - exportación completa a Excel incluyendo observaciones,
+    - resaltado de registros fuera de horario.
 - Endpoints de asistencia implementados:
     - POST /attendance/import-preview
     - POST /attendance/import-confirm
     - GET /attendance/report/{period}
     - PUT /attendance/report/{report_id}
 - Persistencia de reportes mensuales en tabla attendance_reports.
+- Inicialización automática de tablas SQLite al iniciar la API.
 - Importación Excel (CrossChex) con columnas:
     - Usuario Nro.
     - Fecha/Hora
     - Registro
-- Normalización mejorada de Registro:
-    - acepta 0/1,
-    - acepta variantes numéricas (2/3, 4/5, etc.),
-    - acepta texto compatible (entrada/salida, check in/check out).
+- Normalización de `Registro` para aceptar valores compatibles con
+    entrada/salida según el archivo exportado.
 - Inferencia de turno cuando falta asignación semanal:
     - intenta resolver código real Tx con turnos activos,
     - evita INF en la mayor cantidad de casos posible.
@@ -1304,17 +1312,24 @@ frontend/
 - Arquitectura mantenida: API -> Services -> Repositories -> SQLite.
 - Sin arquitectura paralela ni duplicación de tablas de negocio existentes.
 - Responses del módulo de asistencia tipadas y serializadas para consumo frontend.
-- Confirmación de importación soporta reemplazo por período para evitar duplicados.
+- Confirmación de importación soporta reemplazo por período para evitar
+    duplicados.
+- La unicidad de una marcación se calcula por `employee_number` y
+    `date_time`; dos empleados con el mismo horario no colisionan.
 
 ## 23.3 Pendientes inmediatos
 
-- Validar con archivo real de CrossChex todos los valores de Registro observados en producción.
-- Ajustar inferencia de turno en casos borde (especialmente cruces de medianoche y marcas incompletas).
-- Resolver y dejar en verde la suite de tests del importador.
-- Incorporar edición de observación en la grilla de reportes del frontend usando PUT /attendance/report/{report_id}.
+- Validar con archivos reales de CrossChex todos los valores de
+    `Registro` observados en producción.
+- Ajustar inferencia de turno en casos borde, especialmente cruces de
+    medianoche y marcas incompletas.
+- Incorporar edición de observación directamente en la grilla de
+    reportes del frontend usando `PUT /attendance/report/{report_id}`.
 
 ## 23.4 Riesgos / observaciones
 
 - Si el período seleccionado no coincide con la fecha del archivo, los resultados pueden quedar en REGISTRO_INCONSISTENTE.
 - Si no existe asignación semanal en employee_turns, el sistema utiliza inferencia basada en turnos activos.
-- Existen warnings de OpenAPI por operation_id duplicados en rutas de turnos/employee_turns; no bloquea ejecución, pero requiere limpieza posterior.
+- La configuración CORS actual permite los orígenes configurados para
+    desarrollo; en despliegues reales debe restringirse a los dominios
+    autorizados.
