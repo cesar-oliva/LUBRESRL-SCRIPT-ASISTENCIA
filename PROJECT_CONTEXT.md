@@ -1153,6 +1153,7 @@ Vite y SQLite.
 Componentes operativos:
 
 - ABM de empleados, turnos, feriados y códigos especiales.
+- CRUD de certificados médicos con archivos adjuntos y vigencia por rango.
 - Turnos con múltiples períodos horarios.
 - Asignación de turnos por empleado y día de la semana.
 - Planilla mensual de turnos con consulta por período, modelo Excel,
@@ -1162,6 +1163,8 @@ Componentes operativos:
 - Resumen y detalle de asistencia con filtros, ordenamiento y
     exportación compatible con Excel.
 - Persistencia y consulta de reportes mensuales.
+- Aplicación automática del código especial `42` en la planilla mensual
+    durante los días cubiertos por un certificado médico.
 - Inicialización automática del esquema SQLite al arrancar la API.
 
 La aplicación se ejecuta como servidor web mediante:
@@ -1245,6 +1248,8 @@ actualizar este contexto, especialmente:
 - `backend/src/attendance/database/schema.sql` para tablas SQLite.
 - `frontend/src/pages/` para los flujos disponibles en la interfaz.
 - `frontend/src/services/` para las llamadas del frontend a la API.
+- `backend/media/medical_certificates/` para los archivos adjuntos de
+    certificados médicos.
 
 # 22. ESTRUCTURA DE FRONTEND
 
@@ -1256,6 +1261,7 @@ frontend/
     │   ├── employees.js
     │   ├── holidays.js
     │   ├── home.js
+    │   ├── medicalCertificates.js
     │   ├── monthlyTurns.js
     │   ├── reports.js
     │   ├── specialCodes.js
@@ -1278,6 +1284,8 @@ frontend/
 - Soporte de turnos con múltiples períodos (ejemplo: T4 partido).
 - ABM completo de feriados en frontend/backend.
 - ABM completo de códigos especiales en frontend/backend.
+- CRUD de certificados médicos con búsqueda de empleado, carga de
+    archivo, rango de vigencia, cálculo de días y descarga.
 - Navegación desde Home a Empleados, Turnos, Feriados, códigos
     especiales, planilla mensual y Reportes.
 - Planilla mensual de turnos con descarga de modelo, importación Excel
@@ -1297,6 +1305,8 @@ frontend/
     - PUT /attendance/report/{report_id}
 - Persistencia de reportes mensuales en tabla attendance_reports.
 - Inicialización automática de tablas SQLite al iniciar la API.
+- Certificados médicos aplican el código `42` en la planilla mensual y
+    restauran las asignaciones previas al eliminarse.
 - Importación Excel (CrossChex) con columnas:
     - Usuario Nro.
     - Fecha/Hora

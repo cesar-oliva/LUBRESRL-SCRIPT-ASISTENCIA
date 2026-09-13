@@ -92,3 +92,30 @@ CREATE TABLE IF NOT EXISTS attendance_reports (
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS medical_certificates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_number INTEGER NOT NULL,
+    original_filename TEXT NOT NULL,
+    stored_filename TEXT NOT NULL UNIQUE,
+    valid_from TEXT NOT NULL,
+    valid_until TEXT NOT NULL,
+    days_count INTEGER NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_number)
+        REFERENCES employees(employee_number)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS medical_certificate_assignments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    certificate_id INTEGER NOT NULL,
+    assignment_date TEXT NOT NULL,
+    previous_code TEXT,
+    UNIQUE (certificate_id, assignment_date),
+    FOREIGN KEY (certificate_id)
+        REFERENCES medical_certificates(id)
+        ON DELETE CASCADE
+);

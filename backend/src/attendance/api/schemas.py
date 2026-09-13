@@ -215,3 +215,19 @@ class AttendanceReportResponse(BaseModel):
 
 class AttendanceObservationUpdateRequest(BaseModel):
     observation: str
+
+
+# =========================================================
+# MEDICAL CERTIFICATES
+# =========================================================
+
+class MedicalCertificateResponse(BaseModel):
+    id: int
+    employee_number: int
+    employee_name: str
+    original_filename: str
+    valid_from: str
+    valid_until: str
+    days_count: int
+    active: bool
+    created_at: Optional[str] = None

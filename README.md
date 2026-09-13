@@ -51,6 +51,8 @@ attendance/
 - Persistencia de turnos con múltiples períodos horarios
 - Asignación de turnos por empleado y día de la semana
 - Códigos especiales de asistencia
+- CRUD de certificados médicos con carga y descarga de archivos
+- Aplicación automática del código `42` en la planilla mensual durante la licencia médica
 - Importación de marcaciones desde Excel (CrossChex)
 - Previsualización de resultados antes de persistir
 - Detección de duplicados por legajo y fecha/hora de marcación
@@ -67,6 +69,13 @@ attendance/
 - Pantalla de Turnos (ABM)
 - Pantalla de Feriados (ABM)
 - Pantalla de Códigos especiales (ABM)
+- Pantalla de Certificados médicos:
+  - búsqueda de empleado
+  - carga del certificado médico
+  - fechas de vigencia inclusivas
+  - cálculo de días involucrados
+  - edición, descarga y eliminación
+  - estilos consistentes y responsive con el resto de las pantallas
 - Pantalla de asignación mensual de turnos
 - Pantalla de Reportes:
   - carga de archivo Excel CrossChex
@@ -119,11 +128,6 @@ El sistema evita duplicar un código especial existente o utilizar el mismo cód
 
 ## Endpoints principales
 
-### Salud
-
-- GET /health
-- GET /
-
 ### Empleados
 
 - GET /employees
@@ -175,6 +179,15 @@ El sistema evita duplicar un código especial existente o utilizar el mismo cód
 - PUT /special-codes/{special_code_id}
 - DELETE /special-codes/{special_code_id}
 
+### Certificados médicos
+
+- GET /medical-certificates
+- GET /medical-certificates/{certificate_id}
+- GET /medical-certificates/{certificate_id}/file
+- POST /medical-certificates
+- PUT /medical-certificates/{certificate_id}
+- DELETE /medical-certificates/{certificate_id}
+
 ## Base de datos
 
 Archivo SQLite generado en:
@@ -193,6 +206,8 @@ Tablas de negocio relevantes:
 - employee_turns
 - holidays
 - attendance_reports
+- medical_certificates
+- medical_certificate_assignments
 
 ## Instalación
 
@@ -297,6 +312,22 @@ Cada registro del reporte puede incluir:
 
 Los estados principales son `EN_HORARIO`, `LLEGADA_TARDE`, `SALIDA_ANTICIPADA`, `LLEGADA_TARDE_Y_SALIDA_ANTICIPADA`, `SIN_REGISTRO_ENTRADA`, `SIN_REGISTRO_SALIDA`, `SIN_REGISTRO` y `REGISTRO_INCONSISTENTE`.
 
+## Certificados médicos
+
+El certificado médico se registra para un empleado con un rango de fechas inclusivo y un archivo adjunto. La cantidad de días se calcula como:
+
+`fecha_hasta - fecha_desde + 1`
+
+Al crear o activar un certificado:
+
+- Se valida que el empleado exista y esté activo.
+- Se rechazan certificados activos superpuestos para el mismo empleado.
+- Se crea automáticamente el código especial `42` (`CERTIFICADO MEDICO`) si todavía no existe.
+- Cada día del rango se guarda en la planilla mensual con el código `42`.
+- Se conserva la asignación anterior de cada día para poder restaurarla.
+
+Al eliminar un certificado, se restauran las asignaciones anteriores y se eliminan los días que no tenían una asignación previa. Los archivos se almacenan en `backend/media/medical_certificates` y se descargan desde el endpoint del certificado.
+
 ## Dependencias Python actuales
 
 En backend/requirements.txt están registradas, entre otras:
@@ -311,6 +342,7 @@ En backend/requirements.txt están registradas, entre otras:
 
 - Módulos ABM (empleados, turnos, feriados): operativos
 - Módulos de códigos especiales y asignación mensual de turnos: operativos
+- Módulo de certificados médicos: operativo con archivos, vigencia y aplicación automática del código 42
 - Módulo reportes/importación: operativo con previsualización, validación, filtros, ordenamiento y exportación
 - Persistencia y consulta de reportes: operativas
 

@@ -126,6 +126,21 @@ export function renderHome(container) {
 
                 </div>
 
+                <!-- CERTIFICADOS MEDICOS -->
+                <div
+                    class="dashboard-card"
+                    data-navigate="medicalCertificates"
+                >
+                    <span class="dashboard-icon">
+                        🩺
+                    </span>
+
+                    <div>
+                        <h3>Certificados médicos</h3>
+                        <p>Gestionar ausencias médicas</p>
+                    </div>
+                </div>
+
 
                 <!-- FERIADOS -->
 

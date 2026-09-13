@@ -1,0 +1,311 @@
+.medical-certificates-page {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.medical-certificates-page .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 25px;
+}
+
+.medical-certificates-page .page-header h2 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--color-text-dark);
+}
+
+.medical-certificates-page .page-header p {
+    margin: 6px 0 0;
+    color: var(--color-text-secondary);
+}
+
+.medical-certificates-page .home-back-button {
+    white-space: nowrap;
+}
+
+.medical-certificates-page .primary-button,
+.medical-certificates-page .secondary-button {
+    min-height: 40px;
+    padding: 10px 16px;
+    border: 0;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+}
+
+.medical-certificates-page .primary-button {
+    background-color: var(--color-primary);
+    color: #fff;
+}
+
+.medical-certificates-page .primary-button:hover {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-1px);
+}
+
+.medical-certificates-page .secondary-button {
+    background-color: #e2e8f0;
+    color: var(--color-text-dark);
+}
+
+.medical-certificates-page .secondary-button:hover {
+    background-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+.medical-certificates-page button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+}
+
+.medical-certificates-page .content-card {
+    padding: 24px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.medical-certificate-form-card {
+    margin-bottom: 16px;
+}
+
+.medical-certificates-page .content-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.medical-certificates-page .content-card-header h3 {
+    margin: 0 0 6px;
+    color: var(--color-text-dark);
+}
+
+.medical-certificates-page .content-card-header p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+}
+
+.medical-certificate-form-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.medical-certificate-form-grid .field {
+    min-width: 0;
+}
+
+.medical-certificate-form-grid .field,
+.medical-active-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: var(--color-text-dark);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.medical-certificate-form-grid input[type="date"],
+.medical-certificate-form-grid input[type="text"],
+.medical-certificate-form-grid input[type="number"],
+.medical-certificate-form-grid input[type="file"] {
+    width: 100%;
+    min-height: 40px;
+    box-sizing: border-box;
+    padding: 9px 12px;
+    border: 1px solid var(--color-border-dark);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+    color: var(--color-text-dark);
+    font-size: 14px;
+}
+
+.medical-certificate-form-grid input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.medical-certificate-form-grid input[readonly] {
+    background-color: var(--color-surface-hover);
+    color: var(--color-text-secondary);
+}
+
+.medical-file-field {
+    grid-column: span 2;
+}
+
+.medical-file-field input[type="file"] {
+    padding: 4px;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.medical-file-field input[type="file"]::file-selector-button {
+    margin-right: 8px;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: var(--color-primary-light);
+    color: var(--color-primary-dark);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.medical-file-field input[type="file"]::file-selector-button:hover {
+    background: var(--color-primary);
+    color: #fff;
+}
+
+.medical-file-field small,
+.medical-certificate-message {
+    color: var(--color-text-secondary);
+    font-size: 13px;
+}
+
+.medical-certificate-message {
+    min-height: 18px;
+    margin: 16px 0 0;
+}
+
+.medical-active-field {
+    align-self: end;
+    margin-bottom: 10px;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.medical-active-field input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-primary);
+}
+
+.medical-certificates-table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.medical-certificates-page .data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.medical-certificates-page .data-table th,
+.medical-certificates-page .data-table td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.medical-certificates-page .data-table th {
+    background-color: var(--color-surface-hover);
+    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.medical-certificates-page .data-table td {
+    color: #334155;
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+.medical-certificates-page .data-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.medical-certificates-page .data-table tbody tr:hover {
+    background-color: var(--color-surface-hover);
+}
+
+.medical-certificates-page .data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.medical-certificates-page .data-table a {
+    color: var(--color-primary-dark);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.medical-certificates-page .data-table a:hover {
+    text-decoration: underline;
+}
+
+.medical-certificates-page .table-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.medical-certificates-page .table-action-button {
+    padding: 7px 10px;
+    border: 0;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.medical-certificates-page .table-action-button.edit {
+    background: var(--color-primary-light);
+    color: var(--color-primary-dark);
+}
+
+.medical-certificates-page .table-action-button.delete {
+    background: var(--color-danger-light);
+    color: var(--color-danger-dark);
+}
+
+.medical-certificates-page .table-action-button:hover {
+    transform: translateY(-1px);
+}
+
+.medical-certificates-page .checkbox-field {
+    margin: 0;
+}
+
+@media (max-width: 900px) {
+    .medical-certificate-form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .medical-certificates-page .page-header,
+    .medical-certificates-page .content-card-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .medical-certificates-page .content-card {
+        padding: 18px;
+    }
+
+    .medical-certificate-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .medical-file-field {
+        grid-column: auto;
+    }
+}

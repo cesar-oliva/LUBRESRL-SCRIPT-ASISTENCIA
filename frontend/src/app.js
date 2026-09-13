@@ -7,6 +7,7 @@ const routes = {
     turns: () => import('./pages/turns.js'),
     monthlyTurns: () => import('./pages/monthlyTurns.js'),
     specialCodes: () => import('./pages/specialCodes.js'),
+    medicalCertificates: () => import('./pages/medicalCertificates.js'),
     holidays: () => import('./pages/holidays.js'),
     reports: () => import('./pages/reports.js')
 };
