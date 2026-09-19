@@ -8,6 +8,9 @@ from src.attendance.repositories.turn_repository import TurnRepository
 from src.attendance.repositories.monthly_turn_assignment_repository import (
     MonthlyTurnAssignmentRepository,
 )
+from src.attendance.repositories.medical_certificate_repository import (
+    MedicalCertificateRepository,
+)
 
 
 class AttendanceImportService:
@@ -20,6 +23,7 @@ class AttendanceImportService:
         turn_repository=None,
         report_repository=None,
         monthly_turn_assignment_repository=None,
+        medical_certificate_repository=None,
     ):
         self.employee_repository = employee_repository or EmployeeRepository()
         self.employee_turn_repository = employee_turn_repository or EmployeeTurnRepository()
@@ -27,6 +31,9 @@ class AttendanceImportService:
         self.report_repository = report_repository or AttendanceReportRepository()
         self.monthly_turn_assignment_repository = (
             monthly_turn_assignment_repository or MonthlyTurnAssignmentRepository()
+        )
+        self.medical_certificate_repository = (
+            medical_certificate_repository or MedicalCertificateRepository()
         )
 
     def read_excel_rows(self, file_obj):
@@ -123,17 +130,33 @@ class AttendanceImportService:
             "total_imported": 0,
             "duplicated_records": duplicated_records,
             "late_arrivals": 0,
+            "reincidences": 0,
             "early_departures": 0,
             "missing_records": 0,
+            "absence_records": 0,
+            "medical_absences": 0,
+            "unjustified_absences": 0,
             "inconsistent_records": 0,
         }
 
         entries = []
+        period_days = self._period_days(period)
+        certificates = self._active_certificates_by_employee(period)
+        for employee_number, day_key in self._missing_assigned_days(grouped, period_days):
+            grouped[(employee_number, day_key)] = []
+
         for (employee_number, day_key), records in sorted(grouped.items(), key=lambda item: (item[0][0], item[0][1])):
             employee = self.employee_repository.get_by_employee_number(employee_number)
-            segments = self._build_employee_segments(records)
+            segments = self._build_employee_segments(records) if records else [{"entry": None, "exit": None}]
+            day_turn = self._resolve_turn_for_segments(
+                employee_number,
+                day_key,
+                segments,
+                period=period,
+                tolerance_minutes=tolerance_minutes,
+            ) if employee else None
 
-            for segment in segments:
+            for segment_index, segment in enumerate(segments):
                 actual_entry = segment["entry"]["date_time"] if segment["entry"] else None
                 actual_exit = segment["exit"]["date_time"] if segment["exit"] else None
 
@@ -146,7 +169,7 @@ class AttendanceImportService:
                     status = "REGISTRO_INCONSISTENTE"
                     observation = "El legajo no existe en la base de datos."
                 else:
-                    turn = self._resolve_turn_for_day(
+                    turn = day_turn or self._resolve_turn_for_day(
                         employee_number,
                         day_key,
                         actual_entry,
@@ -154,7 +177,13 @@ class AttendanceImportService:
                         period=period,
                         tolerance_minutes=tolerance_minutes,
                     )
-                    expected_entry, expected_exit = self._resolve_expected_interval(turn, day_key, actual_entry, actual_exit)
+                    expected_entry, expected_exit = self._resolve_expected_interval_for_segment(
+                        turn,
+                        day_key,
+                        actual_entry,
+                        actual_exit,
+                        segment_index,
+                    )
                     minutes_late = self._compute_minutes_late(actual_entry, expected_entry, tolerance_minutes)
                     minutes_early = self._compute_minutes_early(actual_exit, expected_exit, tolerance_minutes)
 
@@ -178,8 +207,12 @@ class AttendanceImportService:
                         status = "SIN_REGISTRO_ENTRADA"
                         observation = "No se encontró registro de entrada."
                     else:
-                        status = "SIN_REGISTRO"
-                        observation = "No se encontraron registros de asistencia para este turno."
+                        if day_key in certificates.get(employee_number, set()):
+                            status = "FALTA_CERTIFICADO"
+                            observation = "Certificado validado en centro médico."
+                        else:
+                            status = "FALTA_SIN_CERTIFICADO"
+                            observation = "Falta sin certificado médico activo."
 
                     if period and not self._is_in_period(day_key, period):
                         status = "REGISTRO_INCONSISTENTE"
@@ -198,21 +231,54 @@ class AttendanceImportService:
                     "observation": observation,
                     "minutes_late": minutes_late if employee else 0,
                     "minutes_early": minutes_early if employee else 0,
+                    "entry_after_expected": bool(
+                        actual_entry and expected_entry and actual_entry > expected_entry
+                    ),
                     "state": status,
                 }
                 entries.append(output)
                 summary["total_imported"] += 1
 
-                if status == "LLEGADA_TARDE":
+                if minutes_late > 0:
                     summary["late_arrivals"] += 1
-                if status == "SALIDA_ANTICIPADA":
+                if minutes_early > 0:
                     summary["early_departures"] += 1
                 if status in {"SIN_REGISTRO", "SIN_REGISTRO_ENTRADA", "SIN_REGISTRO_SALIDA"}:
                     summary["missing_records"] += 1
+                if status in {"FALTA_SIN_CERTIFICADO", "FALTA_CERTIFICADO"}:
+                    summary["missing_records"] += 1
+                    summary["absence_records"] += 1
+                if status == "FALTA_CERTIFICADO":
+                    summary["medical_absences"] += 1
+                if status == "FALTA_SIN_CERTIFICADO":
+                    summary["unjustified_absences"] += 1
                 if status == "REGISTRO_INCONSISTENTE":
                     summary["inconsistent_records"] += 1
 
+        late_by_employee = {}
+        for entry in entries:
+            if entry["entry_after_expected"]:
+                late_by_employee[entry["employee_number"]] = (
+                    late_by_employee.get(entry["employee_number"], 0) + 1
+                )
+
+        recurring_employees = {
+            employee_number
+            for employee_number, count in late_by_employee.items()
+            if count >= 3
+        }
+        summary["reincidences"] = len(recurring_employees)
+        for entry in entries:
+            if (
+                entry["employee_number"] not in recurring_employees
+                or not entry["entry_after_expected"]
+            ):
+                continue
+            entry["status"] = f"REINCIDENCIA_{entry['status']}"
+            entry["state"] = entry["status"]
+
         summary["total_turns_analyzed"] = len(entries)
+        summary["total_employees"] = len({entry["employee_number"] for entry in entries})
 
         if entries and summary["inconsistent_records"] == len(entries):
             errors.append(
@@ -221,6 +287,167 @@ class AttendanceImportService:
             )
 
         return {"entries": entries, "summary": summary, "errors": errors}
+
+    def _resolve_turn_for_segments(
+        self,
+        employee_number,
+        day_key,
+        segments,
+        period=None,
+        tolerance_minutes=5,
+    ):
+        monthly_code = self.monthly_turn_assignment_repository.get_code(
+            period,
+            day_key,
+            employee_number,
+        ) if period else None
+        assigned_turn = self._get_turn_by_code(monthly_code) if monthly_code else None
+
+        candidates = self.turn_repository.get_active() or self.turn_repository.get_all()
+        matching_turn = self._find_turn_matching_segments(
+            candidates,
+            segments,
+            day_key,
+            tolerance_minutes,
+        )
+        if matching_turn is not None:
+            if (
+                period
+                and monthly_code
+                and self._normalize_turn_code(matching_turn.code) != self._normalize_turn_code(monthly_code)
+            ):
+                self.monthly_turn_assignment_repository.save_code(
+                    period,
+                    day_key,
+                    employee_number,
+                    matching_turn.code,
+                )
+            return matching_turn
+
+        if assigned_turn is not None and assigned_turn.active:
+            return assigned_turn
+
+        weekday = day_key.isoweekday()
+        schedule = self.employee_turn_repository.get_employee_schedule(employee_number)
+        for item in schedule:
+            if item["day_of_week"] == weekday:
+                return item["turn"]
+        return self._resolve_turn_for_day(
+            employee_number,
+            day_key,
+            segments[0]["entry"]["date_time"] if segments and segments[0]["entry"] else None,
+            segments[0]["exit"]["date_time"] if segments and segments[0]["exit"] else None,
+            period=period,
+            tolerance_minutes=tolerance_minutes,
+        )
+
+    def _find_turn_matching_segments(self, turns, segments, day_key, tolerance_minutes):
+        matches = []
+        for turn in turns or []:
+            if not turn.active or len(getattr(turn, "periods", [])) != len(segments):
+                continue
+            score = 0
+            matched = True
+            for segment, work_period in zip(segments, turn.periods):
+                expected_entry = datetime.combine(day_key, self._parse_time(work_period.start_time))
+                expected_exit = datetime.combine(day_key, self._parse_time(work_period.end_time))
+                if expected_exit < expected_entry:
+                    expected_exit += timedelta(days=1)
+                actual_entry = segment["entry"]["date_time"] if segment["entry"] else None
+                actual_exit = segment["exit"]["date_time"] if segment["exit"] else None
+                if not actual_entry or not actual_exit:
+                    matched = False
+                    break
+                adjusted_exit = actual_exit
+                if adjusted_exit < actual_entry:
+                    adjusted_exit += timedelta(days=1)
+                entry_delta = abs((actual_entry - expected_entry).total_seconds())
+                exit_delta = abs((adjusted_exit - expected_exit).total_seconds())
+                if entry_delta > 30 * 60 or exit_delta > 30 * 60:
+                    matched = False
+                    break
+                score += entry_delta + exit_delta
+            if matched:
+                matches.append((score, turn))
+        return min(matches, key=lambda item: item[0])[1] if matches else None
+
+    @staticmethod
+    def _normalize_turn_code(code):
+        return str(code or "").replace(" ", "").upper()
+
+    def _missing_assigned_days(self, grouped, period_days):
+        missing = []
+        monthly_assignments = self.monthly_turn_assignment_repository.get_for_period(
+            self._period_key(period_days)
+        ) if period_days else []
+        monthly_days = {
+            (row["employee_number"], self._as_date(row["assignment_date"]))
+            for row in monthly_assignments
+            if row["assignment_code"] == "42"
+            or self._get_turn_by_code(row["assignment_code"]) is not None
+        }
+        for employee in self.employee_repository.get_all():
+            if not employee.active:
+                continue
+            schedule = self.employee_turn_repository.get_employee_schedule(employee.employee_number)
+            assigned_weekdays = {
+                item["day_of_week"]
+                for item in schedule
+                if item.get("turn") and item["turn"].active
+            }
+            for day_key in period_days:
+                key = (employee.employee_number, day_key)
+                if (
+                    (day_key.isoweekday() in assigned_weekdays or key in monthly_days)
+                    and key not in grouped
+                ):
+                    missing.append((employee.employee_number, day_key))
+        return missing
+
+    @staticmethod
+    def _period_key(period_days):
+        return period_days[0].strftime("%Y-%m")
+
+    def _get_turn_by_code(self, code):
+        turn = self.turn_repository.get_by_code(code)
+        if turn is not None:
+            return turn
+
+        normalized_code = str(code).replace(" ", "").upper()
+        for candidate in self.turn_repository.get_all() or []:
+            if str(candidate.code).replace(" ", "").upper() == normalized_code:
+                return candidate
+        return None
+
+    def _active_certificates_by_employee(self, period):
+        certificates_by_employee = {}
+        for certificate in self.medical_certificate_repository.get_active_covering_period(period):
+            day = self._as_date(certificate.valid_from)
+            valid_until = self._as_date(certificate.valid_until)
+            while day <= valid_until:
+                if self._is_in_period(day, period):
+                    certificates_by_employee.setdefault(certificate.employee_number, set()).add(day)
+                day += timedelta(days=1)
+        return certificates_by_employee
+
+    @staticmethod
+    def _as_date(value):
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, date):
+            return value
+        return datetime.strptime(value, "%Y-%m-%d").date()
+
+    def _period_days(self, period):
+        try:
+            first_day = datetime.strptime(period + "-01", "%Y-%m-%d").date()
+        except (TypeError, ValueError):
+            return []
+        next_month = (first_day.replace(day=28) + timedelta(days=4)).replace(day=1)
+        return [
+            first_day + timedelta(days=offset)
+            for offset in range((next_month - first_day).days)
+        ]
 
     def save_report(self, period, entry):
         employee = self.employee_repository.get_by_employee_number(entry["employee_number"])
@@ -322,7 +549,7 @@ class AttendanceImportService:
             )
 
         if monthly_code:
-            monthly_turn = self.turn_repository.get_by_code(monthly_code)
+            monthly_turn = self._get_turn_by_code(monthly_code)
             if monthly_turn is not None and monthly_turn.active:
                 if self._entry_matches_turn(actual_entry, monthly_turn, day_key, tolerance_minutes):
                     return monthly_turn
@@ -494,31 +721,48 @@ class AttendanceImportService:
             end_dt += timedelta(days=1)
         return start_dt, end_dt
 
+    def _resolve_expected_interval_for_segment(
+        self,
+        turn,
+        date_key,
+        actual_entry=None,
+        actual_exit=None,
+        segment_index=0,
+    ):
+        if turn and getattr(turn, "periods", None) and segment_index < len(turn.periods):
+            work_period = turn.periods[segment_index]
+            start_dt = datetime.combine(date_key, self._parse_time(work_period.start_time))
+            end_dt = datetime.combine(date_key, self._parse_time(work_period.end_time))
+            if end_dt < start_dt:
+                end_dt += timedelta(days=1)
+            return start_dt, end_dt
+        return self._resolve_expected_interval(turn, date_key, actual_entry, actual_exit)
+
     def _build_employee_segments(self, records):
         if not records:
             return []
 
-        entries = sorted((item for item in records if item["registration"] == 0), key=lambda item: item["date_time"])
-        exits = sorted((item for item in records if item["registration"] == 1), key=lambda item: item["date_time"])
-
-        used_exits = set()
         segments = []
-        for entry in entries:
-            matched_exit = None
-            for index, exit in enumerate(exits):
-                if index in used_exits:
-                    continue
-                if exit["date_time"] > entry["date_time"]:
-                    matched_exit = exit
-                    used_exits.add(index)
-                    break
-            segments.append({"entry": entry, "exit": matched_exit})
+        pending_entry = None
 
-        for index, exit in enumerate(exits):
-            if index not in used_exits:
-                segments.append({"entry": None, "exit": exit})
+        for record in sorted(records, key=lambda item: item["date_time"]):
+            if record["registration"] == 0:
+                if pending_entry is not None:
+                    segments.append({"entry": pending_entry, "exit": None})
+                pending_entry = record
+                continue
 
-        return sorted(segments, key=lambda segment: (segment["entry"] or segment["exit"])["date_time"])
+            if pending_entry is None:
+                segments.append({"entry": None, "exit": record})
+                continue
+
+            segments.append({"entry": pending_entry, "exit": record})
+            pending_entry = None
+
+        if pending_entry is not None:
+            segments.append({"entry": pending_entry, "exit": None})
+
+        return segments
 
     def _parse_time(self, value):
         if isinstance(value, str):
@@ -539,8 +783,12 @@ class AttendanceImportService:
             parsed = int(value)
             if parsed in self.VALID_REGISTRATIONS:
                 return parsed
-            # CrossChex puede exportar marcas extendidas (2/3, 4/5, etc.).
+            # CrossChex usa 3 como entrada y 4 como salida en algunos archivos.
             if parsed >= 0:
+                if parsed == 3:
+                    return 0
+                if parsed == 4:
+                    return 1
                 return 0 if parsed % 2 == 0 else 1
             return None
 
@@ -552,8 +800,8 @@ class AttendanceImportService:
             "0": 0,
             "1": 1,
             "2": 0,
-            "3": 1,
-            "4": 0,
+            "3": 0,
+            "4": 1,
             "5": 1,
             "entrada": 0,
             "ingreso": 0,
@@ -583,10 +831,7 @@ class AttendanceImportService:
         if not actual_entry or not expected_entry:
             return 0
         delta = actual_entry - expected_entry
-        minutes = max(0, int(delta.total_seconds() // 60))
-        if minutes <= tolerance_minutes:
-            return 0
-        return minutes
+        return max(0, int(delta.total_seconds() // 60))
 
     def _compute_minutes_early(self, actual_exit, expected_exit, tolerance_minutes):
         if not actual_exit or not expected_exit:

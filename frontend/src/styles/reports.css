@@ -477,6 +477,16 @@
     background-color: #ffe4e6 !important;
 }
 
+.data-table tbody tr.report-row-medical,
+.data-table tbody tr.report-row-medical > td {
+    background-color: #dcfce7 !important;
+}
+
+.data-table tbody tr.report-row-medical:hover,
+.data-table tbody tr.report-row-medical:hover > td {
+    background-color: #bbf7d0 !important;
+}
+
 
 .data-table tbody tr:last-child td {
     border-bottom: none;

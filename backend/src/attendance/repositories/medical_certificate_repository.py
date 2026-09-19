@@ -49,6 +49,29 @@ class MedicalCertificateRepository:
         finally:
             connection.close()
 
+    def get_active_covering_period(self, period):
+        connection = get_connection()
+        try:
+            period_start = f"{period}-01"
+            year, month = (int(value) for value in period.split("-"))
+            next_month = month % 12 + 1
+            next_year = year + (1 if month == 12 else 0)
+            period_end = f"{next_year:04d}-{next_month:02d}-01"
+            rows = connection.execute(
+                """
+                SELECT c.*, e.name AS employee_name
+                FROM medical_certificates c
+                JOIN employees e ON e.employee_number = c.employee_number
+                WHERE c.active = 1
+                                    AND c.valid_from < ?
+                  AND c.valid_until >= ?
+                """,
+                                (period_end, period_start),
+            ).fetchall()
+            return [self._to_model(row) for row in rows]
+        finally:
+            connection.close()
+
     def get_by_id(self, certificate_id):
         connection = get_connection()
         try:

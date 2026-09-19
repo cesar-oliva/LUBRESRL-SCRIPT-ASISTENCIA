@@ -101,6 +101,12 @@ export async function renderReports(container) {
                             <option value="all">Todos los empleados</option>
                         </select>
                     </label>
+                    <label class="field" for="attendance-status-filter">
+                        <span>Filtrar por estado</span>
+                        <select id="attendance-status-filter" data-role="status-filter" disabled>
+                            <option value="all">Todos los estados</option>
+                        </select>
+                    </label>
                     <label class="field" for="attendance-sort-field">
                         <span>Ordenar por</span>
                         <select id="attendance-sort-field" data-role="sort-field" disabled>
@@ -134,6 +140,7 @@ export async function renderReports(container) {
     const confirmButton = container.querySelector('[data-action="confirm-import"]');
     const resultsContainer = container.querySelector('[data-role="results-container"]');
     const employeeFilter = container.querySelector('[data-role="employee-filter"]');
+    const statusFilter = container.querySelector('[data-role="status-filter"]');
     const sortField = container.querySelector('[data-role="sort-field"]');
     const sortDirection = container.querySelector('[data-role="sort-direction"]');
     const exportButton = container.querySelector('[data-action="export-report"]');
@@ -176,12 +183,13 @@ export async function renderReports(container) {
 
             previewPeriod = period;
             previewEntries = Array.isArray(preview.entries) ? preview.entries : [];
-            detailEntries = previewEntries;
+            detailEntries = previewEntries.map(normalizeReportRow);
             const previewSummary = preview.summary || {};
             const errors = Array.isArray(preview.errors) ? preview.errors : [];
 
             renderSummary(summaryContainer, previewSummary, errors);
             populateEmployeeFilter(employeeFilter, previewEntries);
+            populateStatusFilter(statusFilter, detailEntries);
             updateDetailEntries();
 
             summaryLabel.textContent = `Previsualización lista para ${period}.`;
@@ -201,6 +209,7 @@ export async function renderReports(container) {
             `;
             resultsContainer.innerHTML = '<div class="empty-state">No hay registros para mostrar.</div>';
             populateEmployeeFilter(employeeFilter, []);
+            populateStatusFilter(statusFilter, []);
             updateDetailEntries();
         }
     });
@@ -253,6 +262,7 @@ export async function renderReports(container) {
             const calculatedSummary = summarizeEntries(normalizedRows);
             renderSummary(summaryContainer, calculatedSummary, []);
             populateEmployeeFilter(employeeFilter, normalizedRows);
+            populateStatusFilter(statusFilter, normalizedRows);
             updateDetailEntries();
 
             summaryLabel.textContent = `Reporte cargado para ${period}.`;
@@ -268,6 +278,7 @@ export async function renderReports(container) {
             resultsContainer.innerHTML = '<div class="empty-state">No hay registros para mostrar.</div>';
             detailEntries = [];
             populateEmployeeFilter(employeeFilter, []);
+            populateStatusFilter(statusFilter, []);
             updateDetailEntries();
         }
     });
@@ -276,6 +287,7 @@ export async function renderReports(container) {
         updateDetailEntries();
     });
 
+    statusFilter.addEventListener('change', updateDetailEntries);
     sortField.addEventListener('change', updateDetailEntries);
     sortDirection.addEventListener('change', updateDetailEntries);
 
@@ -285,9 +297,11 @@ export async function renderReports(container) {
 
     function updateDetailEntries() {
         const selectedEmployee = employeeFilter.value;
+        const selectedStatus = statusFilter.value;
         const filteredEntries = detailEntries.filter((entry) => (
-            selectedEmployee === 'all'
-            || String(getEmployeeNumber(entry)) === selectedEmployee
+            (selectedEmployee === 'all'
+                || String(getEmployeeNumber(entry)) === selectedEmployee)
+            && (selectedStatus === 'all' || entry.status === selectedStatus)
         ));
         const sortedEntries = sortEntries(filteredEntries, sortField.value, sortDirection.value);
 
@@ -297,6 +311,7 @@ export async function renderReports(container) {
             : `${sortedEntries.length} de ${detailEntries.length} registro(s) mostrado(s).`;
         sortField.disabled = detailEntries.length === 0;
         sortDirection.disabled = detailEntries.length === 0;
+        statusFilter.disabled = detailEntries.length === 0;
         exportButton.disabled = detailEntries.length === 0;
     }
 }
@@ -311,11 +326,15 @@ function normalizeReportRow(row) {
         actual_entry: row.actual_entry,
         expected_exit: row.expected_exit,
         actual_exit: row.actual_exit,
-        status: row.status || row.state,
+        status: normalizeStatus(row.status || row.state),
         observation: row.observation,
         minutes_late: Number(row.minutes_late || 0),
         minutes_early: Number(row.minutes_early || 0)
     };
+}
+
+function normalizeStatus(status) {
+    return status === 'FALTA' ? 'FALTA_SIN_CERTIFICADO' : status;
 }
 
 function summarizeEntries(entries) {
@@ -325,24 +344,39 @@ function summarizeEntries(entries) {
         total_imported: entries.length,
         duplicated_records: 0,
         late_arrivals: 0,
+        reincidences: 0,
         early_departures: 0,
         missing_records: 0,
+        absence_records: 0,
+        medical_absences: 0,
+        unjustified_absences: 0,
         inconsistent_records: 0
     };
 
     entries.forEach((entry) => {
         const status = entry.status;
-        if (status === 'LLEGADA_TARDE') summary.late_arrivals += 1;
-        if (status === 'SALIDA_ANTICIPADA') summary.early_departures += 1;
-        if (status === 'LLEGADA_TARDE_Y_SALIDA_ANTICIPADA') {
-            summary.late_arrivals += 1;
-            summary.early_departures += 1;
+        if (entry.minutes_late > 0 || status.includes('LLEGADA_TARDE')) summary.late_arrivals += 1;
+        if (entry.minutes_early > 0 || status.includes('SALIDA_ANTICIPADA')) summary.early_departures += 1;
+        if (status.includes('REINCIDENCIA')) {
+            summary.reincidences += 1;
         }
         if (['SIN_REGISTRO', 'SIN_REGISTRO_ENTRADA', 'SIN_REGISTRO_SALIDA'].includes(status)) {
             summary.missing_records += 1;
         }
+        if (['FALTA_SIN_CERTIFICADO', 'FALTA_CERTIFICADO'].includes(status)) {
+            summary.missing_records += 1;
+            summary.absence_records += 1;
+        }
+        if (status === 'FALTA_CERTIFICADO') summary.medical_absences += 1;
+        if (status === 'FALTA_SIN_CERTIFICADO') summary.unjustified_absences += 1;
         if (status === 'REGISTRO_INCONSISTENTE') summary.inconsistent_records += 1;
     });
+
+    summary.reincidences = new Set(
+        entries
+            .filter((entry) => entry.status.includes('REINCIDENCIA'))
+            .map((entry) => getEmployeeNumber(entry))
+    ).size;
 
     return summary;
 }
@@ -359,8 +393,12 @@ function renderSummary(container, summary, errors) {
                 <tr><th>Total importados</th><td>${safeSummary.total_imported ?? 0}</td></tr>
                 <tr><th>Duplicados</th><td>${safeSummary.duplicated_records ?? 0}</td></tr>
                 <tr><th>Llegadas tarde</th><td>${safeSummary.late_arrivals ?? 0}</td></tr>
+                <tr><th>Empleados reincidentes (3 o más llegadas tarde)</th><td>${safeSummary.reincidences ?? 0}</td></tr>
                 <tr><th>Salidas anticipadas</th><td>${safeSummary.early_departures ?? 0}</td></tr>
                 <tr><th>Faltantes</th><td>${safeSummary.missing_records ?? 0}</td></tr>
+                <tr><th>Faltas totales</th><td>${safeSummary.absence_records ?? 0}</td></tr>
+                <tr><th>Faltas justificadas (42)</th><td>${safeSummary.medical_absences ?? 0}</td></tr>
+                <tr><th>Faltas sin certificado</th><td>${safeSummary.unjustified_absences ?? 0}</td></tr>
                 <tr><th>Inconsistentes</th><td>${safeSummary.inconsistent_records ?? 0}</td></tr>
             </tbody>
         </table>
@@ -395,7 +433,11 @@ function renderEntries(container, entries) {
             </thead>
             <tbody>
                 ${entries.map((entry) => `
-                    <tr class="${entry.observation !== 'Marcación dentro del horario establecido.' ? 'report-row-alert' : ''}">
+                    <tr class="${entry.status === 'FALTA_CERTIFICADO'
+                        ? 'report-row-medical'
+                        : entry.observation !== 'Marcación dentro del horario establecido.'
+                            ? 'report-row-alert'
+                            : ''}">
                         <td>${escapeHtml(entry.date ?? '-')}</td>
                         <td>${escapeHtml(String(entry.employee_number ?? entry.report_number ?? '-'))}</td>
                         <td>${escapeHtml(entry.employee_name ?? entry.report_name ?? '-')}</td>
@@ -433,7 +475,36 @@ function populateEmployeeFilter(filter, entries) {
             `)
             .join('')}
     `;
+    filter.value = 'all';
     filter.disabled = employees.size === 0;
+}
+
+function populateStatusFilter(filter, entries) {
+    const statuses = [...new Set(entries.map((entry) => entry.status).filter(Boolean))].sort();
+    const labels = {
+        EN_HORARIO: 'En horario',
+        LLEGADA_TARDE: 'Llegada tarde',
+        LLEGADA_TARDE_Y_SALIDA_ANTICIPADA: 'Llegada tarde y salida anticipada',
+        REINCIDENCIA_LLEGADA_TARDE: 'Reincidencia: llegada tarde',
+        REINCIDENCIA_LLEGADA_TARDE_Y_SALIDA_ANTICIPADA: 'Reincidencia: llegada tarde y salida anticipada',
+        REINCIDENCIA_EN_HORARIO: 'Reincidencia: llegada dentro de tolerancia',
+        SALIDA_ANTICIPADA: 'Salida anticipada',
+        SIN_REGISTRO: 'Sin registro',
+        SIN_REGISTRO_ENTRADA: 'Sin registro de entrada',
+        SIN_REGISTRO_SALIDA: 'Sin registro de salida',
+        FALTA_CERTIFICADO: 'Falta con certificado (42)',
+        FALTA_SIN_CERTIFICADO: 'Falta sin certificado',
+        REGISTRO_INCONSISTENTE: 'Registro inconsistente'
+    };
+
+    filter.innerHTML = `
+        <option value="all">Todos los estados</option>
+        ${statuses.map((status) => `
+            <option value="${escapeHtml(status)}">${escapeHtml(labels[status] || status)}</option>
+        `).join('')}
+    `;
+    filter.value = 'all';
+    filter.disabled = statuses.length === 0;
 }
 
 function getEmployeeNumber(entry) {

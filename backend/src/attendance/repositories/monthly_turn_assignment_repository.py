@@ -41,6 +41,21 @@ class MonthlyTurnAssignmentRepository:
         finally:
             connection.close()
 
+    def get_for_period(self, period):
+        connection = get_connection()
+        try:
+            return connection.execute(
+                """
+                SELECT employee_number, assignment_date, assignment_code
+                FROM monthly_turn_assignments
+                WHERE period = ?
+                ORDER BY employee_number, assignment_date
+                """,
+                (period,),
+            ).fetchall()
+        finally:
+            connection.close()
+
     def save_code(self, period, assignment_date, employee_number, assignment_code):
         connection = get_connection()
         try:

@@ -1162,6 +1162,13 @@ Componentes operativos:
 - Detección de duplicados por legajo y fecha/hora.
 - Resumen y detalle de asistencia con filtros, ordenamiento y
     exportación compatible con Excel.
+- Filtro de detalle por empleado y estado.
+- Detección de faltas para días con turno asignado sin marcas, diferenciando
+    `FALTA_SIN_CERTIFICADO` y `FALTA_CERTIFICADO` con código `42`.
+- Detección de reincidencia desde tres ingresos posteriores al horario
+    esperado en el mismo período, incluso dentro de la tolerancia.
+- Resolución de turnos alternativos con múltiples períodos y actualización
+    de la planilla mensual cuando las marcas coinciden con otro turno.
 - Persistencia y consulta de reportes mensuales.
 - Aplicación automática del código especial `42` en la planilla mensual
     durante los días cubiertos por un certificado médico.
@@ -1313,6 +1320,10 @@ frontend/
     - Registro
 - Normalización de `Registro` para aceptar valores compatibles con
     entrada/salida según el archivo exportado.
+- Para archivos CrossChex con códigos `0/4/3/1`, la secuencia se interpreta
+    como entrada, salida, entrada y salida.
+- La tolerancia se aplica a cada ingreso de un turno partido.
+- Los segmentos de un turno partido se muestran por separado en el detalle.
 - Inferencia de turno cuando falta asignación semanal:
     - intenta resolver código real Tx con turnos activos,
     - evita INF en la mayor cantidad de casos posible.
@@ -1331,8 +1342,8 @@ frontend/
 
 - Validar con archivos reales de CrossChex todos los valores de
     `Registro` observados en producción.
-- Ajustar inferencia de turno en casos borde, especialmente cruces de
-    medianoche y marcas incompletas.
+- Ajustar inferencia de turno en casos borde restantes, especialmente cruces
+    de medianoche y marcas incompletas.
 - Incorporar edición de observación directamente en la grilla de
     reportes del frontend usando `PUT /attendance/report/{report_id}`.
 

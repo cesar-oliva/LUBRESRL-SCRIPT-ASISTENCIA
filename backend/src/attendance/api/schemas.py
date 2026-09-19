@@ -172,8 +172,12 @@ class AttendancePreviewSummaryResponse(BaseModel):
     total_imported: int
     duplicated_records: int
     late_arrivals: int
+    reincidences: int
     early_departures: int
     missing_records: int
+    absence_records: int
+    medical_absences: int
+    unjustified_absences: int
     inconsistent_records: int
 
 

@@ -57,6 +57,10 @@ attendance/
 - Previsualización de resultados antes de persistir
 - Detección de duplicados por legajo y fecha/hora de marcación
 - Análisis de llegadas tarde, salidas anticipadas, faltantes e inconsistencias
+- Detección de faltas en días con turno asignado sin entrada ni salida
+- Clasificación de faltas sin certificado (`FALTA_SIN_CERTIFICADO`) y faltas justificadas con código `42` (`FALTA_CERTIFICADO`)
+- Detección de reincidencia desde tres ingresos posteriores al horario esperado en el mismo período, incluso dentro de la tolerancia
+- Resolución de turnos alternativos y actualización de la planilla mensual cuando las marcas coinciden con otro turno
 - Confirmación y guardado de reporte mensual, reemplazando el período anterior
 - Consulta de reporte guardado por período
 - Actualización de observación de registro de reporte
@@ -80,9 +84,9 @@ attendance/
 - Pantalla de Reportes:
   - carga de archivo Excel CrossChex
   - previsualización y confirmación de importación
-  - resumen con empleados, turnos, importados, duplicados, faltantes e inconsistentes
-  - detalle de marcaciones con resaltado rojo suave para registros fuera de horario
-  - filtro por empleado
+  - resumen con empleados, turnos, importados, duplicados, faltantes, certificados médicos y reincidencias
+  - detalle de marcaciones con resaltado para registros fuera de horario y certificados validados
+  - filtros por empleado y estado
   - ordenamiento por legajo, nombre o fecha, ascendente o descendente
   - exportación completa del detalle a Excel compatible (`.xls`), incluyendo observaciones
 
@@ -276,7 +280,7 @@ python -m src.attendance.database.init_db
 4. Cargar el Excel exportado desde CrossChex.
 5. Ejecutar previsualización.
 6. Revisar el resumen y el detalle de marcaciones.
-7. Filtrar por empleado u ordenar el detalle por legajo, nombre o fecha.
+7. Filtrar por empleado o estado, y ordenar el detalle por legajo, nombre o fecha.
 8. Exportar toda la previsualización a Excel si se necesita analizarla fuera del sistema.
 9. Confirmar la importación para persistir el reporte en `attendance_reports`.
 10. Consultar el mismo período para validar los datos guardados.
@@ -287,7 +291,7 @@ El archivo debe ser Excel (`.xlsx` o `.xls`) y contener estas columnas:
 
 - `Usuario Nro.`: legajo del empleado.
 - `Fecha/Hora`: fecha y hora de la marcación.
-- `Registro`: tipo de marcación compatible con entrada o salida (`0` o `1`, según el formato exportado).
+- `Registro`: tipo de marcación compatible con entrada o salida (`0`, `1`, `3` o `4`, según el formato exportado).
 
 Durante la previsualización:
 
@@ -296,6 +300,11 @@ Durante la previsualización:
 - Una marcación es única por combinación de `legajo + fecha/hora`.
 - Dos empleados distintos pueden tener la misma fecha/hora sin que se consideren duplicados.
 - Las marcaciones válidas se agrupan por empleado y día para resolver los turnos.
+- Los códigos CrossChex `0/4/3/1` se interpretan en secuencia como entrada, salida, entrada y salida para turnos partidos.
+- Los turnos con múltiples períodos se analizan como segmentos independientes; la tolerancia se aplica a cada ingreso.
+- Si las marcas coinciden con otro turno activo, se asigna ese turno y se actualiza la planilla mensual.
+- Un día con turno asignado y sin marcas se registra como `FALTA_SIN_CERTIFICADO` o `FALTA_CERTIFICADO` si existe un certificado médico activo.
+- Tres o más ingresos posteriores al horario esperado dentro del mismo período generan reincidencia, aunque estén dentro de la tolerancia.
 - Se marca como inconsistente un registro fuera del período seleccionado.
 
 ## Reporte generado
@@ -310,7 +319,7 @@ Cada registro del reporte puede incluir:
 - Minutos de llegada tarde o salida anticipada.
 - Observación explicativa.
 
-Los estados principales son `EN_HORARIO`, `LLEGADA_TARDE`, `SALIDA_ANTICIPADA`, `LLEGADA_TARDE_Y_SALIDA_ANTICIPADA`, `SIN_REGISTRO_ENTRADA`, `SIN_REGISTRO_SALIDA`, `SIN_REGISTRO` y `REGISTRO_INCONSISTENTE`.
+Los estados principales son `EN_HORARIO`, `LLEGADA_TARDE`, `SALIDA_ANTICIPADA`, `LLEGADA_TARDE_Y_SALIDA_ANTICIPADA`, `FALTA_SIN_CERTIFICADO`, `FALTA_CERTIFICADO`, `SIN_REGISTRO_ENTRADA`, `SIN_REGISTRO_SALIDA`, `SIN_REGISTRO` y `REGISTRO_INCONSISTENTE`. Los estados de reincidencia utilizan el prefijo `REINCIDENCIA_`.
 
 ## Certificados médicos
 
